@@ -3,7 +3,7 @@
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
 # 
-# Version 0.1 Beta
+# Version 0.1.2 Beta
 #
 # Published without Warranty - use at your own risk
 #
