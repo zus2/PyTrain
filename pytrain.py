@@ -1,5 +1,5 @@
 # -----------------------------------------------
-# PyTrain - asynchronous Pybricks train controller 
+# PyTrain - an asynchronous Pybricks train controller 
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
 # 
@@ -64,13 +64,13 @@ LED_READY = Color.ORANGE*1.0  # loco ready and idling
 LED_CALIBRATE = Color.VIOLET # calibrate crawl speed in programme
 
 # --- functions
-# controller() - handles button presses and sets remote and hub status lights
-# ems() - energy management system monitors and changes the speed of loco 
 # drive() - takes a dc target value from EMS and changes motor speed with simulated inertia
 # dcprofile() - set up s discrete duty cycle drive steps from threshold (dcmin) to dcmax - does not have to be linear 
 # stop() - send out dc of 0 and sets a wait period before traction can recommence to prevent overruns
-# go() - sets status lights and briefly blocks further +/- presses for t ms
 # calibrate() - set the crawl speed in programme using left stop button (hold,set,save)
+# go() - sets status lights and briefly blocks further +/- presses for t ms
+# ems() - energy management system monitors and changes the speed of loco 
+# controller() - handles button presses and sets remote and hub status lights
 # main() - the main loop
 
 async def drive(target):
@@ -106,7 +106,7 @@ async def drive(target):
     
     print("dc target:",target,"actual dc",dc,"controller",cc)
 
-    # hard code upper safety limit during development ( and maybe permanent )
+    # hard code dc safety limit during development ( and maybe permanent )
     dc = copysign(min(90,abs(dc)),dc)
     motor.dc(dc) 
     
