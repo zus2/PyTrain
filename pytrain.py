@@ -3,7 +3,7 @@
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
 # 
-# Version 0.1.2 Beta
+# Version 0.2 Beta
 #
 # Published without Warranty - use at your own risk
 #
@@ -16,7 +16,8 @@
 # Crawl speed calibration adjustable in programme: 
 #    Hold down left Stop button until violet light, set speed then press again to register
 # Indicator lights for Go, Stop, Ready, Calibrate 
-#
+# v0.2 Added stop script or shudown hub in programme using center button
+# 
 # To Do: 
 # add multiple profiles like Lok24
 # add auto-detect for other hubs, motors like Lok24 
@@ -127,7 +128,7 @@ def dcprofile(mode):
         for x in range(1,s+1):
             dcsteps[x+1] = dcmin + (dcmax-dcmin)*x/s
 
-    print("dcsteps",dcsteps)    
+    print("dcsteps",s,dcsteps)    
 
 async def stop():
     global brake
@@ -209,6 +210,8 @@ async def ems():
     #target = 0 # local target dc
     
     while True:
+        # check current dc (dc) versus target dc from controller (cc)
+
         direction = copysign(1,cc)
         target = round(direction*dcsteps[abs(cc)])
 
@@ -216,6 +219,8 @@ async def ems():
             #print ("drive",target)
             await drive(target)
         
+        # controls accel / decel response
+        # try 200 for s=12 , less if s higher 
         await wait(200)
 
 async def controller():
@@ -243,17 +248,22 @@ async def controller():
                 await stop()
                 
             elif Button.CENTER in pressed:
-                # press once to stop the programme
+                # press once to stop the train AND the programme
                 # hold 2 secs to shutdown hub
+                cc = 0
+                print('remote center',cc)
+                await stop()
                 count = 0
                 while Button.CENTER in pressed:
-                    button = remote.buttons.pressed()
+                    pressed = remote.buttons.pressed()
                     count+=1
-                    if (count == 20): # 2 seconds
-                        await stop()
+                    #print(count)
+                    if (count == 10): # 1 seconds ( plus brake in stop() )
                         print("Shutting down hub ...")
+                        await wait(100)
                         hub.system.shutdown() 
                     await wait(100)
+                
                 raise SystemExit("Closing program..")
     
         # print(len(pressed) or "listening...")
