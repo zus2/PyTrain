@@ -4,4 +4,14 @@ Strictly Beta software in inital stages of development - no warranty, use at you
 
 Full documentation to follow, for now see in programme comments.
 
-Comments welcome, particularly the asynchronous functionality - this is my first time using Python also .. ( I have a C/perl/php web history )
+Comments welcome, particularly the asynchronous functionality - "await" should be "listen" no? await implies that the thread blocks - 
+
+Tl;Dr - I prefer nocase variable naming ( globals / constants etc excepted ? 
+
+This is my first time using Python also .. ( I have a C/Perl/PHP web/unix history )
+
+I still prefer nocase variables like $myname ... sorry !
+
+I blame the shells/unix: chmod , rmdir , pwd , wc ..
+
+Cannot get used to friend_1 over friend1
