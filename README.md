@@ -8,7 +8,7 @@ Comments welcome, particularly the asynchronous functionality - "await" should b
 
 Dev blurb:
 
-TL;DR - I prefer nocase variable naming ( globals / constants etc excepted ? 
+TL;DR - I prefer nocase variable naming ( globals / constants / modules etc excepted ) 
 
 This is my first time using Python also .. ( I have a C/Perl/PHP web/unix history )
 
