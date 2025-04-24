@@ -6,7 +6,9 @@ Full documentation to follow, for now see in programme comments.
 
 Comments welcome, particularly the asynchronous functionality - "await" should be "listen" no? await implies that the thread blocks - 
 
-Tl;Dr - I prefer nocase variable naming ( globals / constants etc excepted ? 
+Dev blurb:
+
+TL;DR - I prefer nocase variable naming ( globals / constants etc excepted ? 
 
 This is my first time using Python also .. ( I have a C/Perl/PHP web/unix history )
 
