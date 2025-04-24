@@ -4,4 +4,4 @@ Strictly Beta software in inital stages of development - no warranty, use at you
 
 Full documentation to follow, for now see in programme comments.
 
-Comments welcome.
+Comments welcome, particularly the asynchronous functionality - this is my first time using Python also .. ( I have a C/perl/php web history )
