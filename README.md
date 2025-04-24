@@ -10,8 +10,6 @@ TL;DR - I prefer nocase variable naming ( globals / constants / modules etc exce
 
 This is my first time using Python also .. ( I have a C/Perl/PHP web/unix history )
 
-I still prefer nocase variables like $myname !
-
 I blame the shells/unix: chmod , rmdir , pwd , wc ..
 
 Cannot get used to friend_1 over friend1
