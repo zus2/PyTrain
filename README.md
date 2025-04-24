@@ -4,7 +4,7 @@ Strictly Beta software in inital stages of development - no warranty, use at you
 
 Full documentation to follow, for now see in programme comments.
 
-Comments welcome, particularly the asynchronous functionality - "await" should be "listen" no? await implies that the thread blocks "awaiting" a return  
+Comments welcome, particularly the asynchronous functionality - "await" should be "listen" no? "await" implies that the thread blocks "awaiting" a return  
 
 Dev blurb:
 
