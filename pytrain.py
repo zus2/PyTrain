@@ -1,28 +1,30 @@
 # -----------------------------------------------
 # PyTrain - an asynchronous Pybricks train controller 
 #
-# requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
-# 
-# Version 0.2 Beta
+# Version 0.2.1 Beta
+# https://github.com/zus2/PyTrain
 #
 # Published without Warranty - use at your own risk
+# requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
 #
 # Thanks to: 
 # Lok24 https://www.eurobricks.com/forum/forums/topic/187081-control-your-trains-without-smart-device-with-pybricks/
 # @mpersand https://github.com/and-ampersand-and/PyBricks-Train-Motor-Control-Script?files=1:
 #
 # Features:
-# Asynchronous speed change for inertia effect
-# Crawl speed calibration adjustable in programme: 
-#    Hold down left Stop button until violet light, set speed then press again to register
-# Indicator lights for Go, Stop, Ready, Calibrate 
+# Asynchronous speed change and stop commands for inertia effect 
+# Customisable speed ramp max, min and granularity
+# Crawl speed calibration adjustable in programme 
+# Synced indicator led for Go, Crawl, Stop, Ready, Calibrate 
 # v0.2 Added stop script or shudown hub in programme using center button
-# 
+# v0.3 Added support for 2nd motor and initial support for sensor motors
+#
 # To Do: 
 # add multiple profiles like Lok24
-# add auto-detect for other hubs, motors like Lok24 
+# add auto-detect for other Technic Hub like Lok24 
 # add second hub broadcast and lights like @mpersand
 # add auto shutdown after no activity
+#  
 # .. and much more
 # -----------------------------------------------
 
@@ -32,8 +34,15 @@
 
 s = 12 # duty cycle control granularity - # (s)teps -s to +s
 dcmin = 24 # min dc power (%) to make your train move - can be changed in program ! 
-dcmax = 75 # max dc power (%) to make your train stay on the track .. 
+dcmax = 75 # max dc power (%) to make your train stay on the track ..
+dcacc = 20 # acceleration smoothness - 1 (aggresive) - 100 (gentle) 
 brake = 700 # ms delay after stopping to prevent overruns
+dirmotorA = -1       # A Direction 1 or -1
+dirmotorB = 1       # B Direction 1 or -1
+
+# define  motors - max 2 for CityHub
+motor = []
+dirmotor = [dirmotorA,dirmotorB]
 
 # --- modules
 from pybricks.hubs import CityHub
@@ -41,14 +50,17 @@ from pybricks.parameters import Color, Button, Direction, Port
 from pybricks.pupdevices import DCMotor, Motor, Remote
 from pybricks.tools import multitask, run_task, wait
 from umath import copysign
+from pybricks.iodevices import PUPDevice
+
+
+# --- clear terminal 
+print("\x1b[H\x1b[2J", end="")
 
 # --- set up all devices
 hub = CityHub()
-motor = DCMotor(Port.A, Direction.CLOCKWISE)
-remote = Remote(timeout=None)
-# clear terminal
-print("\x1b[H\x1b[2J", end="")
 print(hub.system.name())
+print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
+remote = Remote(timeout=None)
 
 # --- init vars and constants
 t = 100 # ms delay between button presses if +/- held down used in function go()
@@ -67,6 +79,7 @@ LED_CALIBRATE = Color.VIOLET # calibrate crawl speed in programme
 # --- functions
 # drive() - takes a dc target value from EMS and changes motor speed with simulated inertia
 # dcprofile() - set up s discrete duty cycle drive steps from threshold (dcmin) to dcmax - does not have to be linear 
+# getmotors() -  check ports for connected motors
 # stop() - send out dc of 0 and sets a wait period before traction can recommence to prevent overruns
 # calibrate() - set the crawl speed in programme using left stop button (hold,set,save)
 # go() - sets status lights and briefly blocks further +/- presses for t ms
@@ -109,8 +122,14 @@ async def drive(target):
 
     # hard code dc safety limit during development ( and maybe permanent )
     dc = copysign(min(90,abs(dc)),dc)
-    motor.dc(dc) 
+
+    # send drive command to motors 1 and 2
+    for i in (0,1):
+        if motor[i]:  
+            motor[i].dc(dirmotor[i]*dc)
     
+    # END
+
 def dcprofile(mode): 
     # map the loco power curve - for now theshold and then linear - the drive function can tweak
     # this is called if threshold dcmin is changed live
@@ -130,6 +149,35 @@ def dcprofile(mode):
 
     print("dcsteps",s,dcsteps)    
 
+def getmotors():
+    
+    for x in (0,2):
+
+        port = Port.A if x == 0 else Port.B
+
+        try:
+            device = PUPDevice(port)
+            id = device.info()['id']
+            print("device",id,"on",x)
+
+            if device.info()['id'] < 3:
+                print("DC motor on",port)
+                motor.append(DCMotor(port))
+
+            else:
+                print("Motor on",port)
+                motor.append(Motor(port))
+
+        except OSError as err:
+            print("no device on",port)
+            motor.append("")
+
+        #print(motor)
+
+# -----------------------------------------------
+#  stop()
+# -----------------------------------------------
+
 async def stop():
     global brake
 
@@ -137,7 +185,7 @@ async def stop():
     await remote.light.on(LED_STOP)
     hub.light.on(LED_STOP)
 
-    print("wait a second (",brake,"ms) !")
+    print("brake .. (",brake,"ms )")
     await wait(brake)
 
     await remote.light.on(LED_READY)
@@ -183,7 +231,6 @@ async def calibrate():
 
         await wait(100)
 
-
 async def go():
     global t , cc
 
@@ -206,7 +253,7 @@ async def go():
     await wait(t)                 
     
 async def ems():
-    global dc , cc , dcsteps
+    global dc , cc , dcsteps , dcacc
     #target = 0 # local target dc
     
     while True:
@@ -219,9 +266,9 @@ async def ems():
             #print ("drive",target)
             await drive(target)
         
-        # controls accel / decel response
-        # try 200 for s=12 , less if s higher 
-        await wait(200)
+        # dcacc controls accel / decel response
+        # try 20 (200ms) for s=12 , less if s higher 
+        await wait(dcacc * 10)
 
 async def controller():
     global cc , s 
@@ -277,7 +324,9 @@ async def main():
         ems()
     )
 
+# some of these set up functions have to be run before main()
 dcprofile("run")
+getmotors()
 
 remote.light.on(LED_READY)
 hub.light.on(LED_READY)

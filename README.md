@@ -1,4 +1,4 @@
-Pybricks Train Controller script using asynchronous async/await control for loco inertia effects like the official app.
+Pybricks Train Controller script using asynchronous control for smoother more lifelike inertia effects.
 
 Strictly Beta software in inital stages of development - no warranty, use at your own risk.
 
