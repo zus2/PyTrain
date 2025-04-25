@@ -3,13 +3,5 @@ Pybricks Train Controller script using asynchronous control for smoother more li
 Strictly Beta software in inital stages of development - no warranty, use at your own risk.
 
 Full documentation to follow, for now see in programme comments. 
-Comments welcome, particularly the asynchronous functionality - "await" should be "listen" no? "await" implies that the thread blocks "awaiting" a return when in fact it carries on but is open ( useful ? ) to returned or updated global variables
-Dev blurb:
 
-TL;DR - I prefer nocase variable naming ( globals / constants / modules etc excepted ) 
-
-This is my first time using Python also .. ( I have a C/Perl/PHP web/unix history )
-
-I blame the shells/unix: chmod , rmdir , pwd , wc ..
-
-Cannot get used to friend_1 over friend1
+Comments welcome, particularly the asynchronous logic/functionality.
