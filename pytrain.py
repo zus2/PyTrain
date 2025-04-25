@@ -1,16 +1,18 @@
 # -----------------------------------------------
-# PyTrain - an asynchronous Pybricks train controller 
+# PycoLoco - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.3 Beta
+# Version 0.4 Beta
 # https://github.com/zus2/PyTrain
 #
-# Published without Warranty - use at your own risk
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
 #
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# 
 # Thanks to: 
 # Lok24 https://www.eurobricks.com/forum/forums/topic/187081-control-your-trains-without-smart-device-with-pybricks/
 # @mpersand https://github.com/and-ampersand-and/PyBricks-Train-Motor-Control-Script?files=1:
-#
+# and the Pybricks team of course ..
+# 
 # Features:
 # Asynchronous speed change and stop commands for inertia effect 
 # Customisable speed ramp max, min and granularity
@@ -18,6 +20,7 @@
 # Synced indicator led for Go, Crawl, Stop, Ready, Calibrate 
 # v0.2 Added stop script or shudown hub in programme using center button
 # v0.3 Added support for 2nd motor and initial support for sensor motors
+# v0.4 Cleaned up Motor direction logic and changed name of the programme
 #
 # To Do: 
 # add multiple profiles like Lok24
