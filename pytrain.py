@@ -1,7 +1,7 @@
 # -----------------------------------------------
 # PyTrain - an asynchronous Pybricks train controller 
 #
-# Version 0.2.1 Beta
+# Version 0.3 Beta
 # https://github.com/zus2/PyTrain
 #
 # Published without Warranty - use at your own risk
@@ -40,10 +40,6 @@ brake = 700 # ms delay after stopping to prevent overruns
 dirmotorA = -1       # A Direction 1 or -1
 dirmotorB = 1       # B Direction 1 or -1
 
-# define  motors - max 2 for CityHub
-motor = []
-dirmotor = [dirmotorA,dirmotorB]
-
 # --- modules
 from pybricks.hubs import CityHub
 from pybricks.parameters import Color, Button, Direction, Port
@@ -52,6 +48,11 @@ from pybricks.tools import multitask, run_task, wait
 from umath import copysign
 from pybricks.iodevices import PUPDevice
 
+# define  motors - max 2 for CityHub
+motor = []
+motordirectionA = Direction.CLOCKWISE if dirmotorA == 1 else Direction.COUNTERCLOCKWISE
+motordirectionB = Direction.CLOCKWISE if dirmotorB == 1 else Direction.COUNTERCLOCKWISE
+motordirection = [motordirectionA , motordirectionB]
 
 # --- clear terminal 
 print("\x1b[H\x1b[2J", end="")
@@ -126,7 +127,7 @@ async def drive(target):
     # send drive command to motors 1 and 2
     for i in (0,1):
         if motor[i]:  
-            motor[i].dc(dirmotor[i]*dc)
+            motor[i].dc(dc)
     
     # END
 
@@ -162,11 +163,11 @@ def getmotors():
 
             if device.info()['id'] < 3:
                 print("DC motor on",port)
-                motor.append(DCMotor(port))
+                motor.append(DCMotor(port,motordirection[x]))
 
             else:
                 print("Motor on",port)
-                motor.append(Motor(port))
+                motor.append(Motor(port,motordirection[x]))
 
         except OSError as err:
             print("no device on",port)
