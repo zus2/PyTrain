@@ -1,5 +1,5 @@
 # -----------------------------------------------
-# PycoLoco - A Pybricks train controller with asynchronous MicroPython coroutines 
+# PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
 # Version 0.4 Beta
 # https://github.com/zus2/PyTrain
@@ -20,7 +20,7 @@
 # Synced indicator led for Go, Crawl, Stop, Ready, Calibrate 
 # v0.2 Added stop script or shudown hub in programme using center button
 # v0.3 Added support for 2nd motor and initial support for sensor motors
-# v0.4 Cleaned up Motor direction logic and changed name of the programme
+# v0.4 Cleaned up Motor direction logic 
 #
 # To Do: 
 # add multiple profiles like Lok24
