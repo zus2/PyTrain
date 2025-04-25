@@ -4,4 +4,4 @@ Strictly Beta software in inital stages of development - no warranty, use at you
 
 Full documentation to follow, for now see in programme comments. 
 
-Comments welcome, particularly the asynchronous logic/functionality.
+Comments welcome, particularly the asynchronous logic and functionality.
