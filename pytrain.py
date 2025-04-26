@@ -1,7 +1,7 @@
 # -----------------------------------------------
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.5 Beta
+# Version 0.51 Beta
 # https://github.com/zus2/PyTrain
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
@@ -41,7 +41,7 @@ s = 12 # duty cycle control granularity - # (s)teps -s to +s (range 5 - 100)
 dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 50 )
 dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 51 - 100 )
 dcacc = 20 # acceleration smoothness - 1 (aggresive) - 100 (gentle) 
-brake = 700 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
+brake = 600 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
 dirmotorA = -1       # A Direction clockwise 1 or -1
 dirmotorB = 1       # B Direction clockwise 1 or -1
 
@@ -61,11 +61,19 @@ from pybricks.iodevices import PUPDevice
 # --- clear terminal 
 print("\x1b[H\x1b[2J", end="")
 
-# --- set up all devices
+# --- set up hub
 hub = CityHub()
 print(hub.system.name())
 print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
-remote = Remote(timeout=None)
+
+# --- set up remote
+print ("Looking for remote ..")
+try:
+    remote = Remote(name=None,timeout=10000)
+except OSError as ex:
+    print ("Not found - shutting down ..")
+    wait(100)
+    hub.system.shutdown()
 
 # --- sanity check on user defined values
 # error messages tuple
@@ -104,7 +112,7 @@ if not dirmotorB in (1,-1):
 motor = []
 motordirectionA = Direction.CLOCKWISE if dirmotorA == 1 else Direction.COUNTERCLOCKWISE
 motordirectionB = Direction.CLOCKWISE if dirmotorB == 1 else Direction.COUNTERCLOCKWISE
-motordirection = [motordirectionA , motordirectionB]
+motordirection = (motordirectionA , motordirectionB)
 
 # --- init vars and constants
 t = 100 # ms delay between button presses if +/- held down used in function go()
@@ -130,6 +138,7 @@ LED_CALIBRATE = Color.VIOLET # calibrate crawl speed in programme
 # go() - sets status lights and briefly blocks further +/- presses for t ms
 # ems() - energy management system monitors and changes the speed of loco 
 # controller() - handles button presses and sets remote and hub status lights
+# heartbeat() - shut down after a period of inactivity
 # main() - the main loop
 
 # -----------------------------------------------
@@ -285,7 +294,10 @@ async def calibrate():
         if Button.LEFT in pressed and vc > 0:
             # set new dcmin
             dcmin = cc
+            #hub.system.storage(0, write=dcmin)
             print("new dcmin is",dcmin)
+
+
             dcprofile("run")
             cc = 1
             await go()
@@ -324,7 +336,6 @@ async def go():
 
 async def ems():
     global dc , cc , dcsteps , dcacc
-    #target = 0 # local target dc
     
     while True:
         # check current dc (dc) versus target dc from controller (cc)
@@ -392,7 +403,7 @@ async def controller():
         # print(len(pressed) or "listening...")
         # important - controls sensitivity to repeated and held down button presses
         # also see go()
-        await wait(100)
+        await wait(50)
 
 # -----------------------------------------------
 #  heartbeat() - shutdown after specified period of inactivity
@@ -421,7 +432,6 @@ async def heartbeat():
 # -----------------------------------------------
 #  main() 
 # -----------------------------------------------
-
 
 async def main():
     await multitask(
