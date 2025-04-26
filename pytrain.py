@@ -1,7 +1,7 @@
 # -----------------------------------------------
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.51 Beta
+# Version 0.52 Beta
 # https://github.com/zus2/PyTrain
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
@@ -208,7 +208,7 @@ def dcprofile(mode):
         dcsteps[0] = 0
         dcsteps[1] = dcmin
         for x in range(1,s+1):
-            dcsteps[x+1] = dcmin + (dcmax-dcmin)*x/s
+            dcsteps[x+1] = round( dcmin + (dcmax-dcmin)*x/s, 1 )
 
     print("dcsteps",s,dcsteps)    
 
@@ -356,10 +356,26 @@ async def ems():
 # -----------------------------------------------
 
 async def controller():
-    global cc , s , beat
+    global cc , s , beat , remote
     
     while True:
-        pressed = remote.buttons.pressed()
+        try:
+            pressed = remote.buttons.pressed()
+        except OSError as ex:
+            print (" remote not connected ")
+            await wait(1000)
+            pressed = {}
+
+            '''
+            # reconnect is not working within multitasking ..
+            try:
+                remote = Remote(timeout=1000)
+                await wait(100)
+                print (" remote reconnected ")
+            except OSError as ex:
+                print (" remote still not connected ")
+            '''
+
         if (len(pressed)):
 
             beat = 1 # reset heartbeat()
