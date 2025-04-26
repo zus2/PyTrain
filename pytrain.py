@@ -6,7 +6,9 @@
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+# PARTICULAR PURPOSE AND NONINFRINGEMENT.
 # 
 # Thanks to: 
 # Lok24 https://www.eurobricks.com/forum/forums/topic/187081-control-your-trains-without-smart-device-with-pybricks/
@@ -32,16 +34,21 @@
 # -----------------------------------------------
 
 # -----------------------------------------------
-#  Set user defined values
+#  User defined values
 # -----------------------------------------------
 
-s = 12 # duty cycle control granularity - # (s)teps -s to +s
-dcmin = 24 # min dc power (%) to make your train move - can be changed in program ! 
-dcmax = 75 # max dc power (%) to make your train stay on the track ..
+s = 12 # duty cycle control granularity - # (s)teps -s to +s (range 5 - 100)
+dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 50 )
+dcmax = 100 # max dc power (%) to keep the train stay on the track ( range 51 - 100 )
 dcacc = 20 # acceleration smoothness - 1 (aggresive) - 100 (gentle) 
-brake = 700 # ms delay after stopping to prevent overruns
-dirmotorA = -1       # A Direction 1 or -1
-dirmotorB = 1       # B Direction 1 or -1
+brake = 700 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
+dirmotorA = -1       # A Direction clockwise 1 or -1
+dirmotorB = 1       # B Direction clockwise 1 or -1
+
+# -----------------------------------------------
+# Main programme
+# Do not change anything below here unless you are a competent programmer
+# -----------------------------------------------
 
 # --- modules
 from pybricks.hubs import CityHub
@@ -51,12 +58,6 @@ from pybricks.tools import multitask, run_task, wait
 from umath import copysign
 from pybricks.iodevices import PUPDevice
 
-# define  motors - max 2 for CityHub
-motor = []
-motordirectionA = Direction.CLOCKWISE if dirmotorA == 1 else Direction.COUNTERCLOCKWISE
-motordirectionB = Direction.CLOCKWISE if dirmotorB == 1 else Direction.COUNTERCLOCKWISE
-motordirection = [motordirectionA , motordirectionB]
-
 # --- clear terminal 
 print("\x1b[H\x1b[2J", end="")
 
@@ -65,6 +66,45 @@ hub = CityHub()
 print(hub.system.name())
 print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
 remote = Remote(timeout=None)
+
+# --- sanity check on user defined values
+# error messages tuple
+sm = ("*** sanity check ***","value","invalid - has been reset to","- check your values")
+
+if not s in range(5,101):
+    _bad = s 
+    s = 10
+    print (sm[0],"s",sm[1],_bad,sm[2],s,sm[3])
+if not dcmin in range(10,51): 
+    _bad = dcmin
+    dcmin = 25
+    print (sm[0],"dcmin",sm[1],_bad,sm[2],dcmin,sm[3])
+if not dcmax in range(51,101): 
+    _bad = dcmax
+    dcmax = 75
+    print (sm[0],"dcmax",sm[1],_bad,sm[2],dcmax,sm[3])
+if not dcacc in range(1,101): 
+    _bad = dcacc
+    dcacc = 20
+    print (sm[0],"dcacc",sm[1],_bad,sm[2],dcacc,sm[3])
+if not brake in range(1,2001): 
+    _bad = brake
+    brake = 700
+    print (sm[0],"brake",sm[1],_bad,sm[2],brake,sm[3])
+if not dirmotorA in (1,-1): 
+    _bad = dirmotorA
+    dirmotorA = 1
+    print (sm[0],"dirmotorA",sm[1],_bad,sm[2],"integer",dirmotorA,sm[3])
+if not dirmotorB in (1,-1): 
+    _bad = dirmotorB
+    dirmotorB = -1
+    print (sm[0],"dirmotorB",sm[1],_bad,sm[2],"integer",dirmotorB,sm[3])
+
+# --- define  motors - max 2 for CityHub
+motor = []
+motordirectionA = Direction.CLOCKWISE if dirmotorA == 1 else Direction.COUNTERCLOCKWISE
+motordirectionB = Direction.CLOCKWISE if dirmotorB == 1 else Direction.COUNTERCLOCKWISE
+motordirection = [motordirectionA , motordirectionB]
 
 # --- init vars and constants
 t = 100 # ms delay between button presses if +/- held down used in function go()
@@ -90,6 +130,10 @@ LED_CALIBRATE = Color.VIOLET # calibrate crawl speed in programme
 # ems() - energy management system monitors and changes the speed of loco 
 # controller() - handles button presses and sets remote and hub status lights
 # main() - the main loop
+
+# -----------------------------------------------
+#  drive() - send dc command to the motor(s)
+# -----------------------------------------------
 
 async def drive(target):
     
@@ -123,6 +167,7 @@ async def drive(target):
             dc = 0
     
     print("dc target:",target,"actual dc",dc,"controller",cc)
+    #print (hub.battery.current())
 
     # hard code dc safety limit during development ( and maybe permanent )
     dc = copysign(min(90,abs(dc)),dc)
@@ -133,6 +178,10 @@ async def drive(target):
             motor[i].dc(dc)
     
     # END
+
+# -----------------------------------------------
+#  dcprofile() - build speed ramp
+# -----------------------------------------------
 
 def dcprofile(mode): 
     # map the loco power curve - for now theshold and then linear - the drive function can tweak
@@ -153,9 +202,13 @@ def dcprofile(mode):
 
     print("dcsteps",s,dcsteps)    
 
+# -----------------------------------------------
+#  getmotors() - auto detect DC and technic motors
+# -----------------------------------------------
+
 def getmotors():
     
-    for x in (0,2):
+    for x in (0,1):
 
         port = Port.A if x == 0 else Port.B
 
@@ -200,6 +253,10 @@ async def stop():
         print("calibrate dcmin")
         await calibrate()
 
+# -----------------------------------------------
+#  calibrate() - set the crawl speed using contoller
+# -----------------------------------------------
+
 async def calibrate():
     # set dcmin ( crawl speed )
     global dcmin , cc
@@ -235,6 +292,10 @@ async def calibrate():
 
         await wait(100)
 
+# -----------------------------------------------
+#  go()
+# -----------------------------------------------
+
 async def go():
     global t , cc
 
@@ -255,7 +316,11 @@ async def go():
     await remote.light.on(led)
     hub.light.on(led)
     await wait(t)                 
-    
+
+# -----------------------------------------------
+#  ems() - convert controller presses to motor commands
+# -----------------------------------------------
+
 async def ems():
     global dc , cc , dcsteps , dcacc
     #target = 0 # local target dc
@@ -269,10 +334,11 @@ async def ems():
         if dc != target:
             #print ("drive",target)
             await drive(target)
-        
+
         # dcacc controls accel / decel response
         # try 20 (200ms) for s=12 , less if s higher 
         await wait(dcacc * 10)
+        
 
 async def controller():
     global cc , s 
