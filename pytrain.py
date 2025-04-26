@@ -1,7 +1,7 @@
 # -----------------------------------------------
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.4 Beta
+# Version 0.5 Beta
 # https://github.com/zus2/PyTrain
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
@@ -23,12 +23,12 @@
 # v0.2 Added stop script or shudown hub in programme using center button
 # v0.3 Added support for 2nd motor and initial support for sensor motors
 # v0.4 Cleaned up Motor direction logic 
+# v0.5 Added heartbeat auto-shutdown and user input sanity checks
 #
 # To Do: 
 # add multiple profiles like Lok24
 # add auto-detect for other Technic Hub like Lok24 
 # add second hub broadcast and lights like @mpersand
-# add auto shutdown after no activity
 #  
 # .. and much more
 # -----------------------------------------------
@@ -39,7 +39,7 @@
 
 s = 12 # duty cycle control granularity - # (s)teps -s to +s (range 5 - 100)
 dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 50 )
-dcmax = 100 # max dc power (%) to keep the train stay on the track ( range 51 - 100 )
+dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 51 - 100 )
 dcacc = 20 # acceleration smoothness - 1 (aggresive) - 100 (gentle) 
 brake = 700 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
 dirmotorA = -1       # A Direction clockwise 1 or -1
@@ -111,6 +111,7 @@ t = 100 # ms delay between button presses if +/- held down used in function go()
 cc = 0 # (c)ontroller +/- (c)lick count -s -> 0 -> s
 dc = 0 # active (d)uty (c)ycle load
 dcsteps = {}
+beat = 0 # heartbeat counter
 LED_GO1 = Color.GREEN*0.2  
 LED_GO2 = Color.GREEN*0.3  
 LED_GO3 = Color.GREEN*0.4  
@@ -338,14 +339,19 @@ async def ems():
         # dcacc controls accel / decel response
         # try 20 (200ms) for s=12 , less if s higher 
         await wait(dcacc * 10)
-        
+
+# -----------------------------------------------
+#  controller() - monitor the remote presses
+# -----------------------------------------------
 
 async def controller():
-    global cc , s 
+    global cc , s , beat
     
     while True:
         pressed = remote.buttons.pressed()
         if (len(pressed)):
+
+            beat = 1 # reset heartbeat()
     
             if Button.LEFT_PLUS in pressed:
                 cc = cc + 1 if cc < s+1 else s+1
@@ -388,10 +394,40 @@ async def controller():
         # also see go()
         await wait(100)
 
+# -----------------------------------------------
+#  heartbeat() - shutdown after specified period of inactivity
+# -----------------------------------------------
+
+async def heartbeat():
+    global beat
+
+    while True:
+        # if train is running reset heartbeat 
+        if (cc != 0): 
+            beat = 0 
+
+        # shutdown after 5 minutes if not running and no remote buttons pressed
+        elif (beat >= 5): 
+            print ("no activiy for 5 minutes - shutting down ..")
+            await wait(100)
+            hub.system.shutdown()
+
+        beat += 1
+
+        print ("heartbeat:",beat)
+
+        await wait(60000) # 1 minute
+
+# -----------------------------------------------
+#  main() 
+# -----------------------------------------------
+
+
 async def main():
     await multitask(
         controller(),
-        ems()
+        ems(),
+        heartbeat()
     )
 
 # some of these set up functions have to be run before main()
