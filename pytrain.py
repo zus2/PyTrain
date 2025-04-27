@@ -1,7 +1,7 @@
 # -----------------------------------------------
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.52 Beta
+# Version 0.55 Beta
 # https://github.com/zus2/PyTrain
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
@@ -24,6 +24,7 @@
 # v0.3 Added support for 2nd motor and initial support for sensor motors
 # v0.4 Cleaned up Motor direction logic 
 # v0.5 Added heartbeat auto-shutdown and user input sanity checks
+# v0.55 Added storage and reload for dcmin from calibarate()
 #
 # To Do: 
 # add multiple profiles like Lok24
@@ -128,6 +129,17 @@ LED_CRAWL = Color.CYAN*0.3  # crawl ( dcmin )
 LED_STOP = Color.RED*0.5  # brake 
 LED_READY = Color.ORANGE*1.0  # loco ready and idling
 LED_CALIBRATE = Color.VIOLET # calibrate crawl speed in programme
+
+# check for storage dcmin
+# read user data:
+data = hub.system.storage(offset=0, read=4)
+data = str(data,"utf-8") 
+
+if data[:2] == "dc" and int(data[2:4]) in range (0,30): 
+    dcmin = int(data[2:4])
+    print("using stored dcmin",dcmin," - recalibrate to override",) 
+else:
+    print("stored data",data," could not be used - recalibrate to fix")
 
 # --- functions
 # drive() - takes a dc target value from EMS and changes motor speed with simulated inertia
@@ -294,19 +306,11 @@ async def calibrate():
         if Button.LEFT in pressed and vc > 0:
             # set new dcmin
             dcmin = cc
-
-            '''
-            # read user data:
-            data = hub.system.storage(offset=0, read=4)
-            #print(str(data)) 
-            print(int(data)) 
-            print((int(data)-7007)/10) 
-            '''
-            
-            # store user dcmin:
-            hub.system.storage(offset=0, write=b"7" + f"{dcmin:02}" + "7")
-
             print("new dcmin is",dcmin)
+
+            # store user dcmin:
+            hub.system.storage(offset=0, write=b"dc" + f"{dcmin:02}")
+            print("and saved to hub")
 
             dcprofile("run")
             cc = 1
