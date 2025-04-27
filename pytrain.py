@@ -294,9 +294,19 @@ async def calibrate():
         if Button.LEFT in pressed and vc > 0:
             # set new dcmin
             dcmin = cc
-            #hub.system.storage(0, write=dcmin)
-            print("new dcmin is",dcmin)
 
+            '''
+            # read user data:
+            data = hub.system.storage(offset=0, read=4)
+            #print(str(data)) 
+            print(int(data)) 
+            print((int(data)-7007)/10) 
+            '''
+            
+            # store user dcmin:
+            hub.system.storage(offset=0, write=b"7" + f"{dcmin:02}" + "7")
+
+            print("new dcmin is",dcmin)
 
             dcprofile("run")
             cc = 1

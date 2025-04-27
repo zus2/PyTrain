@@ -38,11 +38,11 @@ async def my_task_1():
     while True:
         try:
             remote.name()   
-            print('remote still connected')
+            print("remote still connected")
             # test if buttons work OK and motor keeps running if disconnected
             if Button.LEFT_PLUS in remote.buttons.pressed(): motor.run(200)
-            if Button.LEFT in remote.buttons.pressed(): motor.stop()
-            if Button.CENTER in remote.buttons.pressed(): raise SystemExit()
+            elif Button.LEFT in remote.buttons.pressed(): motor.stop()
+            elif Button.CENTER in remote.buttons.pressed(): hub.system.shutdown()
         except OSError as ex:
             print("*** remote disconnected ***")
             remoteconnected = False
