@@ -137,9 +137,10 @@ data = str(data,"utf-8")
 
 if data[:2] == "dc" and int(data[2:4]) in range (0,30): 
     dcmin = int(data[2:4])
-    print("using stored dcmin",dcmin," - recalibrate to override",) 
+    print("Using stored dcmin",dcmin," - recalibrate to override",) 
 else:
-    print("stored data",data," could not be used - recalibrate to fix")
+    print("Stored dcmin not found:",data," ( only stored with calibration )")
+    print("Using dcmin=",dcmin)
 
 # --- functions
 # drive() - takes a dc target value from EMS and changes motor speed with simulated inertia
@@ -290,6 +291,8 @@ async def calibrate():
     
     await remote.light.on(LED_CALIBRATE)
     hub.light.on(LED_CALIBRATE)
+
+    print("Adjust dcmin (crawl speed) using Left +/- then save with Left Center")
 
     while True and dcmin == 0:
         pressed = remote.buttons.pressed()
