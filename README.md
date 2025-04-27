@@ -1,6 +1,6 @@
-## Pybricks Train Controller script using asynchronous control for smoother more lifelike inertia effects.
+## Pybricks Train Controller script using asynchronous multitasking for smoother more lifelike inertia effects
 
-## Strictly Beta software in inital stages of development - no warranty, use at your own risk.
+## Strictly Beta software in inital stages of development - no warranty, use at your own risk
 
 ### Features:
 
@@ -17,4 +17,4 @@
 
 ### To add: broadcast to second hub , headlights control
 
-### Comments welcome, particularly the asynchronous logic and functionality
+### Comments welcome, particularly the asynchronous logic and functionality. I am a new to Python, Pybricks and Multitasking !
