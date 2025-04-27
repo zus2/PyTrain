@@ -1,7 +1,7 @@
 # -----------------------------------------------
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.55 Beta
+# Version 0.6 Beta
 # https://github.com/zus2/PyTrain
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
@@ -25,10 +25,10 @@
 # v0.4 Cleaned up Motor direction logic 
 # v0.5 Added heartbeat auto-shutdown and user input sanity checks
 # v0.55 Added storage and reload for dcmin from calibarate()
+# v0.6 Add support for Technic and City hubs 
 #
 # To Do: 
-# add multiple profiles like Lok24
-# add auto-detect for other Technic Hub like Lok24 
+#  
 # add second hub broadcast and lights like @mpersand
 #  
 # .. and much more
@@ -52,7 +52,6 @@ dirmotorB = 1       # B Direction clockwise 1 or -1
 # -----------------------------------------------
 
 # --- modules
-from pybricks.hubs import CityHub
 from pybricks.parameters import Color, Button, Direction, Port
 from pybricks.pupdevices import DCMotor, Motor, Remote
 from pybricks.tools import multitask, run_task, wait
@@ -62,8 +61,15 @@ from pybricks.iodevices import PUPDevice
 # --- clear terminal 
 print("\x1b[H\x1b[2J", end="")
 
-# --- set up hub
-hub = CityHub()
+# --- find and set up hub - City or Technic
+try: 
+    from pybricks.hubs import CityHub
+    hub = CityHub()
+except: 
+    try: 
+        from pybricks.hubs import TechnicHub
+        hub = TechnicHub()
+    except: print("no suitable hubs found")
 print(hub.system.name())
 print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
 
