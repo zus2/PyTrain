@@ -5,11 +5,11 @@
 ### Features:
 
 ### Asynchronous speed change and stop commands for inertia effect 
-### Customisable speed ramp max, min and granularity
+### Customisable speed ramp crawl, max, min, accel and granularity (steps)
 ### Crawl speed calibration adjustable in programme 
-### Synced indicator led for Go, Crawl, Stop, Ready, Calibrate 
-### Added stop script or shudown hub in programme using center button
-### Support for 2nd motor and initial support for sensor motors
+### Synced indicator led for Crawl, Go, Stop, Ready, Calibrate 
+### Added stop script or shutdown hub in programme using center button
+### Support for 2 motors and initial support for sensor motors
 ### Heartbeat auto-shutdown and user input sanity checks
 ### Memorises crawl speed setting after shutdown
 ### Support for Technic and City hubs 
