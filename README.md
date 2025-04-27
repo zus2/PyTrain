@@ -1,7 +1,20 @@
-Pybricks Train Controller script using asynchronous control for smoother more lifelike inertia effects.
+## Pybricks Train Controller script using asynchronous control for smoother more lifelike inertia effects.
 
-Strictly Beta software in inital stages of development - no warranty, use at your own risk.
+## Strictly Beta software in inital stages of development - no warranty, use at your own risk.
 
-Full documentation to follow, for now see in programme comments. 
+### Features:
 
-Comments welcome, particularly the asynchronous logic and functionality.
+### Asynchronous speed change and stop commands for inertia effect 
+### Customisable speed ramp max, min and granularity
+### Crawl speed calibration adjustable in programme 
+### Synced indicator led for Go, Crawl, Stop, Ready, Calibrate 
+### Added stop script or shudown hub in programme using center button
+### Support for 2nd motor and initial support for sensor motors
+### Heartbeat auto-shutdown and user input sanity checks
+### Storage and reload for dcmin from calibrate()
+### Support for Technic and City hubs 
+### Separate reverse speed limit which can be 0
+
+### To add: broadcast to second hub , headlights control
+
+### Comments welcome, particularly the asynchronous logic and functionality
