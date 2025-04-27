@@ -1,7 +1,7 @@
 # -----------------------------------------------
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.6 Beta
+# Version 0.7 Beta
 # https://github.com/zus2/PyTrain
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
@@ -24,8 +24,9 @@
 # v0.3 Added support for 2nd motor and initial support for sensor motors
 # v0.4 Cleaned up Motor direction logic 
 # v0.5 Added heartbeat auto-shutdown and user input sanity checks
-# v0.55 Added storage and reload for dcmin from calibarate()
-# v0.6 Add support for Technic and City hubs 
+# v0.55 Added storage and reload for dcmin from calibrate()
+# v0.6 Added support for Technic and City hubs 
+# v0.7 Added separate reverse speed limit which can be 0
 #
 # To Do: 
 #  
@@ -38,9 +39,10 @@
 #  User defined values
 # -----------------------------------------------
 
-s = 12 # duty cycle control granularity - # (s)teps -s to +s (range 5 - 100)
-dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 50 )
-dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 51 - 100 )
+s = 12 # number of duty cycle steps: -s to +s (range 5 - 100)
+dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
+dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
+dcmaxr = 35 # max reverse dc power (%) ( range 0 - 90 (hard code limit))
 dcacc = 20 # acceleration smoothness - 1 (aggresive) - 100 (gentle) 
 brake = 600 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
 dirmotorA = -1       # A Direction clockwise 1 or -1
@@ -90,14 +92,18 @@ if not s in range(5,101):
     _bad = s 
     s = 10
     print (sm[0],"s",sm[1],_bad,sm[2],s,sm[3])
-if not dcmin in range(10,51): 
+if not dcmin in range(10,41): 
     _bad = dcmin
     dcmin = 25
     print (sm[0],"dcmin",sm[1],_bad,sm[2],dcmin,sm[3])
-if not dcmax in range(51,101): 
+if not dcmax in range(41,91): 
     _bad = dcmax
     dcmax = 75
     print (sm[0],"dcmax",sm[1],_bad,sm[2],dcmax,sm[3])
+if not dcmaxr in range(0,91): 
+    _bad = dcmaxr
+    dcmaxr = 70
+    print (sm[0],"dcmaxr",sm[1],_bad,sm[2],dcmaxr,sm[3])
 if not dcacc in range(1,101): 
     _bad = dcacc
     dcacc = 20
@@ -166,7 +172,7 @@ else:
 
 async def drive(target):
     
-    global dc , cc , dcmin
+    global dc , cc , dcmin , dcmaxr
    
     # 2 deltas for accel and decel
     smooth1 = 5 #  1 - 10 , try 5 - this defines the agressiveness of accel - higher is steadier
@@ -200,6 +206,12 @@ async def drive(target):
 
     # hard code dc safety limit during development ( and maybe permanent )
     dc = copysign(min(90,abs(dc)),dc)
+
+    # hard limit on reverse max dc - should be done via assymetric dcprofiles
+    if dc < -dcmaxr: 
+        dc = -dcmaxr
+        cc += 1
+        print("reverse speed limit:",dcmaxr)
 
     # send drive command to motors 1 and 2
     for i in (0,1):
