@@ -6,18 +6,21 @@
 # Uses race to stop the multitasking if connection lost
 # You may have to store coroutine local data in globals 
 # Or export if the race condition of deconnection is triggered
+# Motor keeps running
 #
 # ---
 
 
 from pybricks.hubs import TechnicHub
-from pybricks.pupdevices import Remote
+from pybricks.pupdevices import Remote, Motor
 from pybricks.tools import wait, run_task, multitask
+from pybricks.parameters import Port, Button
 
 hub = TechnicHub()
+motor = Motor(Port.A)
 
-connected = False
-count = 0
+remoteconnected = False
+instancecount = 0
 
 async def my_task_3():
     while True:
@@ -30,18 +33,21 @@ async def my_task_2():
         await wait(5000)
 
 async def my_task_1():
-    global connected 
-
+    global remoteconnected 
+ 
     while True:
-        try: 
-            remote.name()
+        try:
+            remote.name()   
             print('remote still connected')
-            await wait(100)
-        except:
+            # test if buttons work OK and motor keeps running if disconnected
+            if Button.LEFT_PLUS in remote.buttons.pressed(): motor.run(200)
+            if Button.LEFT in remote.buttons.pressed(): motor.stop()
+            if Button.CENTER in remote.buttons.pressed(): raise SystemExit()
+        except OSError as ex:
             print("*** remote disconnected ***")
-            connected = False
+            remoteconnected = False
             break
-        await wait(1000)
+        await wait(200)
 
 async def main():
     await multitask(
@@ -51,10 +57,10 @@ async def main():
         race=True,
     )
 
-while connected == False:
+while remoteconnected == False:
     remote = Remote(timeout=None)
-    connected = True
-    count += 1
-    print ("instance",count,": remote connected and running main()")
+    remoteconnected = True
+    instancecount += 1
+    print ("instance",instancecount,": remote connected and running main()")
     run_task(main())
 wait(1000)
