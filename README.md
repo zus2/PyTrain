@@ -18,3 +18,9 @@
 ### To add: broadcast to second hub , headlights control
 
 ### Comments welcome, particularly the asynchronous logic and functionality. I am a new to Python, Pybricks and Multitasking !
+
+### Thanks to: 
+### Lok24 https://www.eurobricks.com/forum/forums/topic/187081-control-your-trains-without-smart-device-with-pybricks/
+### @mpersand https://github.com/and-ampersand-and/PyBricks-Train-Motor-Control-Script?files=1
+
+
