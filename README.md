@@ -1,6 +1,6 @@
 ## Pybricks Train Controller script using asynchronous multitasking for smoother more lifelike inertia effects
 
-### Features:
+### Features
 
 Asynchronous speed change and stop commands for inertia effect 
 
@@ -30,7 +30,7 @@ Comments welcome, particularly the asynchronous logic and functionality. I am a 
 
 Your computer needs to support Bluetooth LE
 
-Go to code.pybricks.com ("code") using Chrome or Android ( not iOS or Safari )
+Go to https://code.pybricks.com ("code") using Chrome or Android ( not iOS or Safari )
 
 Install Pybricks on your City or Technic hub
 
@@ -55,7 +55,7 @@ Press the center button:
 * For 2 seconds to shutdown the hub
 
 To set the crawl speed:
-*Press and hold left red button until you see a purple light
+* Press and hold left red button until you see a purple light
 * Press left plus until you have the minimum speed to move
 * Press the left centre button again to store
 * The setting is stored on the hub and will be loaded each time until you reset it
