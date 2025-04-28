@@ -38,7 +38,7 @@
 # --- User defined values
 # ----------
 
-s = 12 # number of duty cycle steps: -s to +s (range 5 - 100)
+dcsteps = 12 # number of duty cycle steps: -s to +s (range 5 - 100)
 dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
 dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
 dcmaxr = 35 # max reverse dc power (%) ( range 0 - 90 (hard code limit))
@@ -132,21 +132,21 @@ async def drive(target):
 def dcprofile(mode): 
     # map the loco power curve - for now theshold and then linear - the drive function can tweak
     # this is called if threshold dcmin is changed live
-    global dcsteps, s , dcmin , dcmax
+    global dcramp, dcsteps , dcmin , dcmax
 
-    dcsteps={} #reset
+    dcramp={} #reset
 
     if mode =="calibrate":
         for x in range(0,50):
-            dcsteps[x] = x
+            dcramp[x] = x
     
     else:
-        dcsteps[0] = 0
-        dcsteps[1] = dcmin
-        for x in range(1,s+1):
-            dcsteps[x+1] = round( dcmin + (dcmax-dcmin)*x/s, 1 )
+        dcramp[0] = 0
+        dcramp[1] = dcmin
+        for x in range(1,dcsteps+1):
+            dcramp[x+1] = round( dcmin + (dcmax-dcmin)*x/dcsteps, 1 )
 
-    print("dcsteps",s,dcsteps)    
+    print("dcsteps",dcsteps,dcramp)    
 
 
 # --- getmotors() - auto detect DC and technic motors
@@ -241,7 +241,7 @@ async def calibrate():
 
 # --- go()
 async def go():
-    global t , cc
+    global buttondelay , cc
 
     # set status lights and disable button briefly
     lowcc = abs(cc)
@@ -259,17 +259,17 @@ async def go():
 
     await remote.light.on(led)
     hub.light.on(led)
-    await wait(t)                 
+    await wait(buttondelay)                 
 
 # --- ems() - convert controller presses to motor commands
 async def ems():
-    global dc , cc , dcsteps , dcacc
+    global dc , cc , dcramp , dcacc
     
     while True:
         # check current dc (dc) versus target dc from controller (cc)
 
         direction = copysign(1,cc)
-        target = round(direction*dcsteps[abs(cc)])
+        target = round(direction*dcramp[abs(cc)])
 
         if dc != target:
             #print ("drive",target)
@@ -281,7 +281,7 @@ async def ems():
 
 # --- controller() - monitor the remote presses
 async def controller():
-    global cc , s , beat , remote
+    global cc , dcsteps , beat , remote
     
     while True:
         try:
@@ -306,13 +306,13 @@ async def controller():
             beat = 1 # reset heartbeat()
     
             if Button.LEFT_PLUS in pressed:
-                cc = cc + 1 if cc < s+1 else s+1
+                cc = cc + 1 if cc < dcsteps+1 else dcsteps+1
                 print('remote',cc)
                 if cc == 0: await stop()
                 else: await go()
                 
             elif Button.LEFT_MINUS in pressed:
-                cc = cc - 1 if cc > -(s+1) else -(s+1)
+                cc = cc - 1 if cc > -(dcsteps+1) else -(dcsteps+1)
                 print('remote',cc)
                 if cc == 0: await stop()
                 else: await go()
@@ -384,10 +384,10 @@ async def main():
 # error messages tuple
 sm = ("*** sanity check ***","value","invalid - has been reset to","- check your values")
 
-if not s in range(5,101):
-    _bad = s 
-    s = 10
-    print (sm[0],"s",sm[1],_bad,sm[2],s,sm[3])
+if not dcsteps in range(5,101):
+    _bad = dcsteps 
+    dcsteps = 10
+    print (sm[0],"s",sm[1],_bad,sm[2],dcsteps,sm[3])
 if not dcmin in range(10,41): 
     _bad = dcmin
     dcmin = 25
@@ -424,10 +424,10 @@ motordirectionB = Direction.CLOCKWISE if dirmotorB == 1 else Direction.COUNTERCL
 motordirection = (motordirectionA , motordirectionB)
 
 # --- init vars and constants
-t = 100 # ms delay between button presses if +/- held down used in function go()
+buttondelay = 100 # ms delay between button presses if +/- held down used in function go()
 cc = 0 # (c)ontroller +/- (c)lick count -s -> 0 -> s
 dc = 0 # active (d)uty (c)ycle load
-dcsteps = {}
+dcramp = {}
 beat = 0 # heartbeat counter
 LED_GO1 = Color.GREEN*0.2  
 LED_GO2 = Color.GREEN*0.3  
