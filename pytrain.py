@@ -15,7 +15,7 @@
 # Customisable speed ramp max, min and granularity
 # Crawl speed calibration adjustable in programme 
 # Synced indicator led for Go, Crawl, Stop, Ready, Calibrate 
-# v0.2 Added stop script or shudown hub in programme using center button
+# v0.2 Added stop script or shutdown hub in programme using center button
 # v0.3 Added support for 2nd motor and initial support for sensor motors
 # v0.4 Cleaned up Motor direction logic 
 # v0.5 Added heartbeat auto-shutdown and user input sanity checks
@@ -42,7 +42,7 @@ dcsteps = 12 # number of duty cycle steps: -s to +s (range 5 - 100)
 dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
 dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
 dcmaxr = 35 # max reverse dc power (%) ( range 0 - 90 (hard code limit))
-dcacc = 20 # acceleration smoothness - 1 (aggresive) - 100 (gentle) 
+dcacc = 20 # acceleration smoothness - 1 (aggressive) - 100 (gentle) 
 brake = 600 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
 dirmotorA = -1       # A Direction clockwise 1 or -1
 dirmotorB = 1       # B Direction clockwise 1 or -1
@@ -114,7 +114,7 @@ async def drive(target):
     # hard code dc safety limit during development ( and maybe permanent )
     dc = copysign(min(90,abs(dc)),dc)
 
-    # hard limit on reverse max dc - should be done via assymetric dcprofiles
+    # hard limit on reverse max dc - should be done via asymmetric dcprofiles
     if dc < -dcmaxr: 
         dc = -dcmaxr
         cc += 1
@@ -130,7 +130,7 @@ async def drive(target):
 
 # --- dcprofile() - build speed ramp
 def dcprofile(mode): 
-    # map the loco power curve - for now theshold and then linear - the drive function can tweak
+    # map the loco power curve - for now threshold and then linear - the drive function can tweak
     # this is called if threshold dcmin is changed live
     global dcramp, dcsteps , dcmin , dcmax
 
@@ -352,12 +352,12 @@ async def heartbeat():
 
     while True:
         # if train is running reset heartbeat 
-        if (cc != 0): 
+        if cc != 0: 
             beat = 0 
 
         # shutdown after 5 minutes if not running and no remote buttons pressed
-        elif (beat >= 5): 
-            print ("no activiy for 5 minutes - shutting down ..")
+        elif beat >= 5: 
+            print ("no activity for 5 minutes - shutting down ..")
             await wait(100)
             hub.system.shutdown()
 
