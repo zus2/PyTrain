@@ -2,8 +2,8 @@
 
 ### Features:
 
-### Asynchronous speed change and stop commands for inertia effect 
-### Customisable speed ramp crawl, max, min, accel and granularity (steps)
+Asynchronous speed change and stop commands for inertia effect 
+Customisable speed ramp crawl, max, min, accel and granularity (steps)
 ### Crawl speed calibration adjustable in programme 
 ### Synced indicator led for Crawl, Go, Stop, Ready, Calibrate 
 ### Added stop script or shutdown hub in programme using center button
