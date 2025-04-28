@@ -1,7 +1,5 @@
 ## Pybricks Train Controller script using asynchronous multitasking for smoother more lifelike inertia effects
 
-## Strictly Beta software in inital stages of development - no warranty, use at your own risk
-
 ### Features:
 
 ### Asynchronous speed change and stop commands for inertia effect 
