@@ -1,7 +1,7 @@
 
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.71 Beta
+# Version 0.8 Beta
 # https://github.com/zus2/PyTrain
 #
 # requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
