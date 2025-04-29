@@ -44,6 +44,7 @@ dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 41 - 9
 dcmaxr = 35 # max reverse dc power (%) ( range 0 - 90 (hard code limit))
 dcacc = 20 # acceleration smoothness - 1 (aggressive) - 100 (gentle) 
 brake = 600 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
+BROADCASTCHANNEL = 1  # broadcast channel for 2nd hub ( Use None or 0 - 255 ) - consumes power !
 dirmotorA = -1       # A Direction clockwise 1 or -1
 dirmotorB = 1       # B Direction clockwise 1 or -1
 
@@ -79,7 +80,7 @@ from pybricks.iodevices import PUPDevice
 # --- drive() - send dc command to the motor(s)
 async def drive(target):
     
-    global dc , cc , dcmin , dcmaxr
+    global dc , cc , dcmin , dcmaxr 
    
     # 2 deltas for accel and decel
     smooth1 = 5 #  1 - 10 , try 5 - this defines the agressiveness of accel - higher is steadier
@@ -117,15 +118,33 @@ async def drive(target):
     # hard limit on reverse max dc - should be done via asymmetric dcprofiles
     if dc < -dcmaxr: 
         dc = -dcmaxr
-        cc += 1
-        print("reverse speed limit:",dcmaxr)
+        cc += 1 # prevent racing to un unreachable target dc ( from cc )
+        print("reverse speed limit reached:",dcmaxr)
+
+    if BROADCASTCHANNEL:
+        # broadcast speed and light
+        bdata = (dc , 0)
+        await broadcast(bdata)
 
     # send drive command to motors 1 and 2
-    for i in (0,1):
-        if motor[i]:  
-            motor[i].dc(dc)
-    
-    # END
+    for m in motor:
+        #print (m)
+        if (m): m.dc(dc)
+
+# --- broadcast() - keep trying to send the data until succesful
+async def broadcast(bdata):
+    global ble
+
+    while True:
+        try:
+            await hub.ble.broadcast(bdata)
+            print("sent ..")
+            ble = True
+            break
+            
+        except OSError as ex:
+            print ("broadcast error",ex)
+            await wait(10)
 
 
 # --- dcprofile() - build speed ramp
@@ -150,11 +169,11 @@ def dcprofile(mode):
 
 
 # --- getmotors() - auto detect DC and technic motors
-def getmotors():
+def getmotors(motor):
     
     for x in (0,1):
 
-        port = Port.A if x == 0 else Port.B
+        port = (Port.A,Port.B)[x]
 
         try:
             device = PUPDevice(port)
@@ -189,11 +208,14 @@ async def stop():
     await remote.light.on(LED_READY)
     hub.light.on(LED_READY)
 
-    # stop button also used for crawl speed calibration 
-    if Button.LEFT in remote.buttons.pressed(): 
-        print("calibrate dcmin")
-        await calibrate()
-
+    # stop button also used for crawl speed calibration
+    count = 0 
+    while Button.LEFT in remote.buttons.pressed():
+        count += 1
+        if count == 5:
+            print("calibrate dcmin")
+            await calibrate()
+        await wait(100)
 
 # --- calibrate() - set the crawl speed using contoller
 async def calibrate():
@@ -233,17 +255,15 @@ async def calibrate():
 
             dcprofile("run")
             cc = 1
-            await go()
+            await go(cc)
             await drive(dcmin) # not strictly necessary but displays values
 
         await wait(100)
 
 
-# --- go()
-async def go():
-    global buttondelay , cc
+# --- go(cc) - set status lights and disable button briefly
+async def go(cc):
 
-    # set status lights and disable button briefly
     lowcc = abs(cc)
     if lowcc == 1:
         led = LED_CRAWL
@@ -256,24 +276,36 @@ async def go():
     else:
         led = LED_GO4
     
+    try:
+        await remote.light.on(led)
+    except OSError as ex:
+        print("** failed to set the LED in go() **",ex)
 
-    await remote.light.on(led)
-    hub.light.on(led)
-    await wait(buttondelay)                 
+        hub.light.on(led)
+    await wait(BUTTONDELAY)                 
 
 # --- ems() - convert controller presses to motor commands
 async def ems():
-    global dc , cc , dcramp , dcacc
+    global dc , cc , dcramp , dcacc , ble
     
     while True:
         # check current dc (dc) versus target dc from controller (cc)
-
+        
         direction = copysign(1,cc)
         target = round(direction*dcramp[abs(cc)])
 
         if dc != target:
             #print ("drive",target)
             await drive(target)
+        else:
+            if BROADCASTCHANNEL and ble == True:
+                await wait(200) # let the broadcast be observed
+                try:
+                    await hub.ble.broadcast(None)
+                    print("closing broadcast")
+                    ble = False
+                except:
+                    print("BLE clash in ems()")
 
         # dcacc controls accel / decel response
         # try 20 (200ms) for s=12 , less if s higher 
@@ -287,7 +319,7 @@ async def controller():
         try:
             pressed = remote.buttons.pressed()
         except OSError as ex:
-            print (" remote not connected ")
+            print (" remote not connected: ",ex)
             await wait(1000)
             pressed = {}
 
@@ -309,13 +341,13 @@ async def controller():
                 cc = cc + 1 if cc < dcsteps+1 else dcsteps+1
                 print('remote',cc)
                 if cc == 0: await stop()
-                else: await go()
+                else: await go(cc)
                 
             elif Button.LEFT_MINUS in pressed:
                 cc = cc - 1 if cc > -(dcsteps+1) else -(dcsteps+1)
                 print('remote',cc)
                 if cc == 0: await stop()
-                else: await go()
+                else: await go(cc)
                    
             elif Button.LEFT in pressed:
                 cc = 0
@@ -349,6 +381,7 @@ async def controller():
 # --- heartbeat() - shutdown after specified period of inactivity
 async def heartbeat():
     global beat
+    _death = 5
 
     while True:
         # if train is running reset heartbeat 
@@ -356,14 +389,14 @@ async def heartbeat():
             beat = 0 
 
         # shutdown after 5 minutes if not running and no remote buttons pressed
-        elif beat >= 5: 
+        elif beat >= _death: 
             print ("no activity for 5 minutes - shutting down ..")
             await wait(100)
             hub.system.shutdown()
 
         beat += 1
 
-        print ("heartbeat:",beat)
+        print ("heartbeat:",beat,"of",_death)
 
         await wait(60000) # 1 minute
 
@@ -372,7 +405,7 @@ async def main():
     await multitask(
         controller(),
         ems(),
-        heartbeat()
+        heartbeat(),
     )
 
 # --------------
@@ -424,10 +457,11 @@ motordirectionB = Direction.CLOCKWISE if dirmotorB == 1 else Direction.COUNTERCL
 motordirection = (motordirectionA , motordirectionB)
 
 # --- init vars and constants
-buttondelay = 100 # ms delay between button presses if +/- held down used in function go()
+BUTTONDELAY = 100 # ms delay between button presses if +/- held down used in function go()
 cc = 0 # (c)ontroller +/- (c)lick count -s -> 0 -> s
 dc = 0 # active (d)uty (c)ycle load
 dcramp = {}
+ble = False # broadcasting is active
 beat = 0 # heartbeat counter
 LED_GO1 = Color.GREEN*0.2  
 LED_GO2 = Color.GREEN*0.3  
@@ -444,11 +478,11 @@ print("\x1b[H\x1b[2J", end="")
 # --- find and set up hub - City or Technic
 try: 
     from pybricks.hubs import CityHub
-    hub = CityHub()
+    hub = CityHub(broadcast_channel=BROADCASTCHANNEL)
 except: 
     try: 
         from pybricks.hubs import TechnicHub
-        hub = TechnicHub()
+        hub = TechnicHub(broadcast_channel=BROADCASTCHANNEL)
     except: print("no suitable hubs found")
 print(hub.system.name())
 print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
@@ -477,7 +511,7 @@ else:
 
 # some of these set up functions have to be run before main()
 dcprofile("run")
-getmotors()
+getmotors(motor)
 
 remote.light.on(LED_READY)
 hub.light.on(LED_READY)

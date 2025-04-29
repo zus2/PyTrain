@@ -30,7 +30,7 @@ Comments welcome, particularly the asynchronous logic and functionality. I am a 
 
 Your computer needs to support Bluetooth LE
 
-Go to https://code.pybricks.com ("code") using Chrome or Android ( not iOS or Safari )
+Go to https://code.pybricks.com ("code") using Chrome, Edge on Mac, PC or Android ( not iOS or Safari )
 
 Install Pybricks on your City or Technic hub
 
