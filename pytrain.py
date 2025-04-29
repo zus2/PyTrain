@@ -22,10 +22,11 @@
 # v0.55 Added storage and reload for dcmin from calibrate()
 # v0.6 Added support for Technic and City hubs 
 # v0.7 Added separate reverse speed limit which can be 0
+# v0.8 Added broadcast to second hub - but buggy do not use feature for now
 #
 # To Do: 
 #  
-# add second hub broadcast and lights like @mpersand
+# add lights like @mpersand
 # auto reconnect remote
 # .. and much more
 #
@@ -44,7 +45,7 @@ dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 41 - 9
 dcmaxr = 35 # max reverse dc power (%) ( range 0 - 90 (hard code limit))
 dcacc = 20 # acceleration smoothness - 1 (aggressive) - 100 (gentle) 
 brake = 600 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
-BROADCASTCHANNEL = 1  # broadcast channel for 2nd hub ( Use None or 0 - 255 ) - consumes power !
+BROADCASTCHANNEL = None  # DO NOT USE FOR NOW broadcast channel for 2nd hub ( Use None or 0 - 255 ) - consumes power !
 dirmotorA = -1       # A Direction clockwise 1 or -1
 dirmotorB = 1       # B Direction clockwise 1 or -1
 
