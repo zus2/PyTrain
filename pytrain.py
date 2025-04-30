@@ -22,7 +22,7 @@
 # v0.55 Added storage and reload for dcmin from calibrate()
 # v0.6 Added support for Technic and City hubs 
 # v0.7 Added separate reverse speed limit which can be 0
-# v0.8 Added broadcast to second hub - but buggy do not use feature for now
+# v0.81 Added broadcast to second hub , changed broadcast code logic 
 #
 # To Do: 
 #  
@@ -45,7 +45,7 @@ dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 41 - 9
 dcmaxr = 35 # max reverse dc power (%) ( range 0 - 90 (hard code limit))
 dcacc = 20 # acceleration smoothness - 1 (aggressive) - 100 (gentle) 
 brake = 600 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
-BROADCASTCHANNEL = None  # DO NOT USE FOR NOW broadcast channel for 2nd hub ( Use None or 0 - 255 ) - consumes power !
+BROADCASTCHANNEL = None  # broadcast channel for 2nd hub ( Use None or 0 - 255 ) - consumes power !
 dirmotorA = -1       # A Direction clockwise 1 or -1
 dirmotorB = 1       # B Direction clockwise 1 or -1
 
@@ -61,13 +61,13 @@ from pybricks.tools import multitask, run_task, wait
 from umath import copysign
 from pybricks.iodevices import PUPDevice
 
-
 # ----------
 # --- functions
 # ----------
 
 # --- function descriptions
 # drive() - takes a dc target value from EMS and changes motor speed with simulated inertia
+# broadcast() - permanent broadcast of dc and light values in separate task
 # dcprofile() - set up s discrete duty cycle drive steps from threshold (dcmin) to dcmax - does not have to be linear 
 # getmotors() -  check ports for connected motors
 # stop() - send out dc of 0 and sets a wait period before traction can recommence to prevent overruns
@@ -78,11 +78,17 @@ from pybricks.iodevices import PUPDevice
 # heartbeat() - shut down after a period of inactivity
 # main() - the main loop
 
-# --- drive() - send dc command to the motor(s)
 async def drive(target):
-    
+    """
+    Adjusts the motor speed to the target duty cycle with simulated inertia.
+
+    Args:
+        target (int): The target duty cycle.
+    """    
     global dc , cc , dcmin , dcmaxr 
    
+    await wait(0)
+
     # 2 deltas for accel and decel
     smooth1 = 5 #  1 - 10 , try 5 - this defines the agressiveness of accel - higher is steadier
     smooth2 = 3 #  1 - 10 , try 2 - this defines the agressiveness of decel - decrease for faster response
@@ -122,31 +128,30 @@ async def drive(target):
         cc += 1 # prevent racing to un unreachable target dc ( from cc )
         print("reverse speed limit reached:",dcmaxr)
 
-    if BROADCASTCHANNEL:
-        # broadcast speed and light
-        bdata = (dc , 0)
-        await broadcast(bdata)
-
     # send drive command to motors 1 and 2
     for m in motor:
         #print (m)
         if (m): m.dc(dc)
 
-# --- broadcast() - keep trying to send the data until succesful
-async def broadcast(bdata):
-    global ble
+# --- broadcast() - broadcast dc and light in separate task
+async def broadcast():   
+    await wait(0)
 
     while True:
+        bdata = (dc, 0)
+
         try:
             await hub.ble.broadcast(bdata)
-            print("sent ..")
-            ble = True
-            break
+            #print("sent ..")
+            #ble = True
+            #break
             
         except OSError as ex:
-            print ("broadcast error",ex)
+            print ("broadcast error",ex, ex.errno)
             await wait(10)
 
+        await wait(10)
+        
 
 # --- dcprofile() - build speed ramp
 def dcprofile(mode): 
@@ -171,7 +176,7 @@ def dcprofile(mode):
 
 # --- getmotors() - auto detect DC and technic motors
 def getmotors(motor):
-    
+
     for x in (0,1):
 
         port = (Port.A,Port.B)[x]
@@ -199,14 +204,23 @@ def getmotors(motor):
 async def stop():
     global brake
 
+    await wait(0)
+
     # avoid overruns
-    await remote.light.on(LED_STOP)
+    try:
+        await remote.light.on(LED_STOP)
+    except:
+        pass # not critical
+    
     hub.light.on(LED_STOP)
 
     print("brake .. (",brake,"ms )")
     await wait(brake)
 
-    await remote.light.on(LED_READY)
+    try:
+        await remote.light.on(LED_READY)
+    except:
+        pass # not critical
     hub.light.on(LED_READY)
 
     # stop button also used for crawl speed calibration
@@ -218,17 +232,22 @@ async def stop():
             await calibrate()
         await wait(100)
 
-# --- calibrate() - set the crawl speed using contoller
+# --- calibrate() - set the crawl speed dcmin using contoller
 async def calibrate():
-    # set dcmin ( crawl speed )
     global dcmin , cc
+
+    await wait(0)
 
     dcmin = 0 # reset
     vc = 0
 
     dcprofile("calibrate")
     
-    await remote.light.on(LED_CALIBRATE)
+    try:
+        await remote.light.on(LED_CALIBRATE)
+    except:
+        pass # not critical
+    
     hub.light.on(LED_CALIBRATE)
 
     print("Adjust dcmin (crawl speed) using Left +/- then save with Left Center")
@@ -264,6 +283,7 @@ async def calibrate():
 
 # --- go(cc) - set status lights and disable button briefly
 async def go(cc):
+    await wait(0)
 
     lowcc = abs(cc)
     if lowcc == 1:
@@ -282,13 +302,14 @@ async def go(cc):
     except OSError as ex:
         print("** failed to set the LED in go() **",ex)
 
-        hub.light.on(led)
+    hub.light.on(led)
     await wait(BUTTONDELAY)                 
 
 # --- ems() - convert controller presses to motor commands
 async def ems():
-    global dc , cc , dcramp , dcacc , ble
-    
+    global dc , cc , dcramp , dcacc 
+    await wait(0)
+
     while True:
         # check current dc (dc) versus target dc from controller (cc)
         
@@ -298,16 +319,7 @@ async def ems():
         if dc != target:
             #print ("drive",target)
             await drive(target)
-        else:
-            if BROADCASTCHANNEL and ble == True:
-                await wait(200) # let the broadcast be observed
-                try:
-                    await hub.ble.broadcast(None)
-                    print("closing broadcast")
-                    ble = False
-                except:
-                    print("BLE clash in ems()")
-
+        
         # dcacc controls accel / decel response
         # try 20 (200ms) for s=12 , less if s higher 
         await wait(dcacc * 10)
@@ -315,6 +327,7 @@ async def ems():
 # --- controller() - monitor the remote presses
 async def controller():
     global cc , dcsteps , beat , remote
+    await wait(0)    
     
     while True:
         try:
@@ -381,6 +394,7 @@ async def controller():
 
 # --- heartbeat() - shutdown after specified period of inactivity
 async def heartbeat():
+    await wait(0)
     global beat
     _death = 5
 
@@ -403,11 +417,20 @@ async def heartbeat():
 
 # --- main() 
 async def main():
-    await multitask(
-        controller(),
-        ems(),
-        heartbeat(),
-    )
+    if BROADCASTCHANNEL:
+        await multitask(
+            controller(),
+            ems(),
+            heartbeat(),
+            broadcast()
+        )
+    else:
+        await multitask(
+            controller(),
+            ems(),
+            heartbeat(),
+            #broadcast()
+        )
 
 # --------------
 # --- initialise 
@@ -462,7 +485,6 @@ BUTTONDELAY = 100 # ms delay between button presses if +/- held down used in fun
 cc = 0 # (c)ontroller +/- (c)lick count -s -> 0 -> s
 dc = 0 # active (d)uty (c)ycle load
 dcramp = {}
-ble = False # broadcasting is active
 beat = 0 # heartbeat counter
 LED_GO1 = Color.GREEN*0.2  
 LED_GO2 = Color.GREEN*0.3  
@@ -475,7 +497,7 @@ LED_CALIBRATE = Color.VIOLET # calibrate crawl speed in programme
 
 # --- clear terminal 
 print("\x1b[H\x1b[2J", end="")
-
+print("Pytrain - Asynchronous Train Controller")
 # --- find and set up hub - City or Technic
 try: 
     from pybricks.hubs import CityHub
