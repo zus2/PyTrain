@@ -22,7 +22,9 @@ Support for Technic and City hubs
 
 Separate reverse speed limit which can be 0 for eg. trams
 
-To add: broadcast to second hub , headlights control
+Supports second hub installed with the slave hub program
+
+To add: headlights control
 
 Comments welcome, particularly the asynchronous logic and functionality. I am a new to Python, Pybricks and Multitasking !
 
