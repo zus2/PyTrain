@@ -59,7 +59,7 @@ We welcome contributions! To contribute:
 
 ## Acknowledgments
 Special thanks to:
-* Lok24: Control Your Trains with Pybricks
-* @mpersand: PyBricks Train Motor Control Script
+* Lok24: [Control Your Trains with Pybricks](https://www.eurobricks.com/forum/index.php?/forums/topic/187081-control-your-trains-without-smart-device-with-pybricks/)
+* @mpersand: [PyBricks Train Motor Control Script](https://github.com/and-ampersand-and/PyBricks-Train-Motor-Control-Script)
 
 
