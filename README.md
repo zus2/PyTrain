@@ -2,21 +2,20 @@
 
 ## Overview
 
-The Pybricks Train Controller is a Python-based script designed to enhance train control using asynchronous multitasking. It provides smoother and more lifelike inertia effects, making it ideal for train enthusiasts and LEGO builders.
+The Pybricks Train Controller is a Python-based script designed to enhance train control using asynchronous multitasking. It offers smoother and more lifelike inertia effects, making it ideal for train enthusiasts and LEGO builders.
 
 ## Table of Contents
+- [Features](#features)
+- [Installation](#installation)
+- [Instructions](#instructions)
+- [Thanks to](#thanks-to)
+- 
 
-Table of Contents
-	•	Features
-	•	Installation
-	•	Instructions
-	•	Contribution
-	•	Acknowledgments
-
-Features
-	•	Asynchronous speed change and stop commands for inertia effect.
-	•	Customizable speed ramp, including crawl, max, min, acceleration, and granularity (steps).
-	•	Crawl speed calibration adjustable within the program.
+## Features
+* Asynchronous speed change and stop commands for inertia effect.
+* Customizable speed ramp, including crawl, max, min, acceleration, and granularity (steps).
+* Crawl speed calibration adjustable within the program.
+* Synced indicator LED for Crawl, Go, Stop, Ready, and Calibrate states.
 	•	Synced indicator LED for Crawl, Go, Stop, Ready, and Calibrate states.
 	•	Added stop script or hub shutdown using the center button.
 	•	Support for 2 motors and initial compatibility with sensor motors.
@@ -26,13 +25,15 @@ Features
 	•	Separate reverse speed limit, which can be set to 0 (e.g., for trams).
 	•	Supports a second hub with the slave hub program.
 	•	Upcoming Feature: Headlights control.
+ 
+## Installation
+1. Ensure that your computer supports Bluetooth LE.
+2. Open Pybricks Code in Chrome, Edge (Mac, PC, or Android; not iOS or Safari).
+3. Install Pybricks firmware on your LEGO City or Technic hub.
+4. Reinstall the LEGO firmware using the Power Functions app if needed.
+5. You can reinstall the LEGO firmware using the Power Functions app if needed.
+6. Connect your motors or lights.
 
-Installation
-	1	Ensure your computer supports Bluetooth LE.
-	2	Open Pybricks Code in Chrome, Edge (Mac, PC, or Android; not iOS or Safari).
-	3	Install Pybricks firmware on your City or Technic hub.
-	◦	You can reinstall the LEGO firmware using the Power Functions app if needed.
-	4	Connect your motors or lights.
 
 Instructions
 	1	Download pytrain.py from this repository.
