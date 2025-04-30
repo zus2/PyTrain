@@ -1,71 +1,64 @@
-## Pybricks Train Controller script using asynchronous multitasking for smoother more lifelike inertia effects
+# Pybricks Train Controller 
 
-### Features
+## Overview
 
-Asynchronous speed change and stop commands for inertia effect 
+The Pybricks Train Controller is a Python-based script designed to enhance train control using asynchronous multitasking. It provides smoother and more lifelike inertia effects, making it ideal for train enthusiasts and LEGO builders.
 
-Customisable speed ramp crawl, max, min, accel and granularity (steps)
+## Table of Contents
 
-Crawl speed calibration adjustable in programme 
+Table of Contents
+	•	Features
+	•	Installation
+	•	Instructions
+	•	Contribution
+	•	Acknowledgments
 
-Synced indicator led for Crawl, Go, Stop, Ready, Calibrate 
+Features
+	•	Asynchronous speed change and stop commands for inertia effect.
+	•	Customizable speed ramp, including crawl, max, min, acceleration, and granularity (steps).
+	•	Crawl speed calibration adjustable within the program.
+	•	Synced indicator LED for Crawl, Go, Stop, Ready, and Calibrate states.
+	•	Added stop script or hub shutdown using the center button.
+	•	Support for 2 motors and initial compatibility with sensor motors.
+	•	Heartbeat auto-shutdown and user input sanity checks.
+	•	Memorizes crawl speed setting after shutdown.
+	•	Compatible with Technic and City hubs.
+	•	Separate reverse speed limit, which can be set to 0 (e.g., for trams).
+	•	Supports a second hub with the slave hub program.
+	•	Upcoming Feature: Headlights control.
 
-Added stop script or shutdown hub in programme using center button
+Installation
+	1	Ensure your computer supports Bluetooth LE.
+	2	Open Pybricks Code in Chrome, Edge (Mac, PC, or Android; not iOS or Safari).
+	3	Install Pybricks firmware on your City or Technic hub.
+	◦	You can reinstall the LEGO firmware using the Power Functions app if needed.
+	4	Connect your motors or lights.
 
-Support for 2 motors and initial support for sensor motors
+Instructions
+	1	Download pytrain.py from this repository.
+	2	Open the file in Pybricks Code.
+	3	Connect to your hub using the Bluetooth browser in Pybricks Code.
+	4	Run pytrain.py in the Pybricks Code editor to load the program onto your hub.
+	5	Turn on your LEGO remote control; orange LEDs should light up on the hub and controller.
+	6	Use the left buttons for motors and the right buttons for lights.
+	7	Adjust user settings as needed or reverse motor directions:
+	◦	Stopping the program: Quickly press the center button.
+	◦	Shutting down the hub: Hold the center button for 2 seconds.
+Setting Crawl Speed
+	1	Press and hold the left red button until you see a purple light.
+	2	Adjust speed with the left '+' button until the minimum speed is reached.
+	3	Press the left center button to store the setting.
+	4	The crawl speed is saved and will load automatically until reset.
 
-Heartbeat auto-shutdown and user input sanity checks
+Contribution
+We welcome contributions! To contribute:
+	1	Fork the repository and create a new branch for your changes.
+	2	Submit a pull request with a clear description of the changes.
+	3	Feel free to open issues for bugs or feature requests.
 
-Memorises crawl speed setting after shutdown
-
-Support for Technic and City hubs 
-
-Separate reverse speed limit which can be 0 for eg. trams
-
-Supports second hub installed with the slave hub program
-
-To add: headlights control
-
-Comments welcome, particularly the asynchronous logic and functionality. I am a new to Python, Pybricks and Multitasking !
-
-### Instructions
-
-Your computer needs to support Bluetooth LE
-
-Go to https://code.pybricks.com ("code") using Chrome, Edge on Mac, PC or Android ( not iOS or Safari )
-
-Install Pybricks on your City or Technic hub
-
-( You can reinstall the Lego firmware using the Power Functions app )
-
-Connect your motors or lights
-
-Download pytrain.py in code
-
-Connect to your hub in the bluetooth browser in code
-
-Run pytrain.py in code - this loads the program onto your hub
-
-Turn on your Lego remote control - you should see orange leds on the hub and controller
-
-Use the left buttons for motors and the right buttons for lights
-
-Change the user settings if you wish or if your motors are turning the wrong way
-
-Press the center button:
-* Quickly to stop the program
-* For 2 seconds to shutdown the hub
-
-To set the crawl speed:
-* Press and hold left red button until you see a purple light
-* Press left plus until you have the minimum speed to move
-* Press the left centre button again to store
-* The setting is stored on the hub and will be loaded each time until you reset it
-
-### Thanks to: 
-
-Lok24 https://www.eurobricks.com/forum/forums/topic/187081-control-your-trains-without-smart-device-with-pybricks/
-
-@mpersand https://github.com/and-ampersand-and/PyBricks-Train-Motor-Control-Script?files=1
+Acknowledgments
+Special thanks to:
+	•	Lok24: Control Your Trains with Pybricks
+	•	@mpersand: PyBricks Train Motor Control Script
 
 
