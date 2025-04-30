@@ -8,58 +8,56 @@ The Pybricks Train Controller is a Python-based script designed to enhance train
 - [Features](#features)
 - [Installation](#installation)
 - [Instructions](#instructions)
-- [Thanks to](#thanks-to)
-- 
+- [Thanks To](#acknowledgements)
 
 ## Features
 * Asynchronous speed change and stop commands for inertia effect.
 * Customizable speed ramp, including crawl, max, min, acceleration, and granularity (steps).
 * Crawl speed calibration adjustable within the program.
 * Synced indicator LED for Crawl, Go, Stop, Ready, and Calibrate states.
-	•	Synced indicator LED for Crawl, Go, Stop, Ready, and Calibrate states.
-	•	Added stop script or hub shutdown using the center button.
-	•	Support for 2 motors and initial compatibility with sensor motors.
-	•	Heartbeat auto-shutdown and user input sanity checks.
-	•	Memorizes crawl speed setting after shutdown.
-	•	Compatible with Technic and City hubs.
-	•	Separate reverse speed limit, which can be set to 0 (e.g., for trams).
-	•	Supports a second hub with the slave hub program.
-	•	Upcoming Feature: Headlights control.
+* Added stop script or hub shutdown using the center button.
+* Support for 2 motors and initial compatibility with sensor motors.
+* Heartbeat auto-shutdown and user input sanity checks.
+* Memorizes crawl speed setting after shutdown.
+* Compatible with Technic and City hubs.
+* Separate reverse speed limit, which can be set to 0 (e.g., for trams).
+* Supports a second hub with the slave hub program.
+* Upcoming Feature: Headlights control.
  
 ## Installation
 1. Ensure that your computer supports Bluetooth LE.
-2. Open Pybricks Code in Chrome, Edge (Mac, PC, or Android; not iOS or Safari).
+2. Open [Pybricks Code](https://code.pybricks.com) in Chrome, Edge (Mac, PC, or Android; not iOS or Safari).
 3. Install Pybricks firmware on your LEGO City or Technic hub.
 4. Reinstall the LEGO firmware using the Power Functions app if needed.
 5. You can reinstall the LEGO firmware using the Power Functions app if needed.
 6. Connect your motors or lights.
 
+## Instructions
+1. Download pytrain.py from this repository.
+2. Open the file in Pybricks Code.
+3. Connect to your hub using the Bluetooth browser in Pybricks Code.
+4. Run pytrain.py in the Pybricks Code editor to load the program onto your hub.
+5. Turn on your LEGO remote control; orange LEDs should light up on the hub and controller.
+6. Use the left buttons for motors and the right buttons for lights.
+7. Adjust user settings as needed or reverse motor directions:
+8. Stopping the program: Quickly press the center button.
+9. Shutting down the hub: Hold the center button for 2 seconds.
 
-Instructions
-	1	Download pytrain.py from this repository.
-	2	Open the file in Pybricks Code.
-	3	Connect to your hub using the Bluetooth browser in Pybricks Code.
-	4	Run pytrain.py in the Pybricks Code editor to load the program onto your hub.
-	5	Turn on your LEGO remote control; orange LEDs should light up on the hub and controller.
-	6	Use the left buttons for motors and the right buttons for lights.
-	7	Adjust user settings as needed or reverse motor directions:
-	◦	Stopping the program: Quickly press the center button.
-	◦	Shutting down the hub: Hold the center button for 2 seconds.
-Setting Crawl Speed
-	1	Press and hold the left red button until you see a purple light.
-	2	Adjust speed with the left '+' button until the minimum speed is reached.
-	3	Press the left center button to store the setting.
-	4	The crawl speed is saved and will load automatically until reset.
+# Setting Crawl Speed
+1. Press and hold the left red button until you see a purple light.
+2. Adjust speed with the left '+' button until the minimum speed is reached.
+3. Press the left center button to store the setting.
+4. The crawl speed is saved and will load automatically until reset.
 
-Contribution
+## Contribution
 We welcome contributions! To contribute:
-	1	Fork the repository and create a new branch for your changes.
-	2	Submit a pull request with a clear description of the changes.
-	3	Feel free to open issues for bugs or feature requests.
+1. Fork the repository and create a new branch for your changes.
+2. Submit a pull request with a clear description of the changes.
+3. Feel free to open issues for bugs or feature requests.
 
-Acknowledgments
+## Acknowledgments
 Special thanks to:
-	•	Lok24: Control Your Trains with Pybricks
-	•	@mpersand: PyBricks Train Motor Control Script
+* Lok24: Control Your Trains with Pybricks
+* @mpersand: PyBricks Train Motor Control Script
 
 
