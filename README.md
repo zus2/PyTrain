@@ -8,7 +8,9 @@ The Pybricks Train Controller is a Python-based script designed to enhance train
 - [Features](#features)
 - [Installation](#installation)
 - [Instructions](#instructions)
-- [Thanks To](#acknowledgements)
+- [Crawl Speed](#setting-crawl-speed)
+- [Contribution](#contribution)
+- [Acknowledgements](#acknowledgments)
 
 ## Features
 * Asynchronous speed change and stop commands for inertia effect.
@@ -28,24 +30,24 @@ The Pybricks Train Controller is a Python-based script designed to enhance train
 1. Ensure that your computer supports Bluetooth LE.
 2. Open [Pybricks Code](https://code.pybricks.com) in Chrome, Edge (Mac, PC, or Android; not iOS or Safari).
 3. Install Pybricks firmware on your LEGO City or Technic hub.
-4. Reinstall the LEGO firmware using the Power Functions app if needed.
-5. You can reinstall the LEGO firmware using the Power Functions app if needed.
-6. Connect your motors or lights.
+4. You can reinstall the LEGO firmware using the Power Functions app if needed.
+5. Connect your motors or lights.
+6. Download pytrain.py from this repository.
+7. Open the file in Pybricks Code.
+8. Connect to your hub using the Bluetooth browser in Pybricks Code.
+9. Run pytrain.py in the Pybricks Code editor to load the program onto your hub.
 
 ## Instructions
-1. Download pytrain.py from this repository.
-2. Open the file in Pybricks Code.
-3. Connect to your hub using the Bluetooth browser in Pybricks Code.
-4. Run pytrain.py in the Pybricks Code editor to load the program onto your hub.
-5. Turn on your LEGO remote control; orange LEDs should light up on the hub and controller.
-6. Use the left buttons for motors and the right buttons for lights.
-7. Adjust user settings as needed or reverse motor directions:
-8. Stopping the program: Quickly press the center button.
-9. Shutting down the hub: Hold the center button for 2 seconds.
+1. Run pytrain.py from Pybricks Code or turn on your hub and press the start button a second time to start the program.
+2. Turn on your LEGO remote control; orange LEDs should light up on the hub and controller.
+3. Use the left buttons for motors and the right buttons for lights.
+4. Adjust user settings as needed in Pybricks Code including setting the motor directions.
+5. Stopping the program: Quickly press the center button.
+6. Shutting down the hub: Hold the center button for 2 seconds.
 
-# Setting Crawl Speed
+## Setting Crawl Speed
 1. Press and hold the left red button until you see a purple light.
-2. Adjust speed with the left '+' button until the minimum speed is reached.
+2. Adjust speed with the left '+' and '-' buttons until the desired crawl speed is reached.
 3. Press the left center button to store the setting.
 4. The crawl speed is saved and will load automatically until reset.
 
