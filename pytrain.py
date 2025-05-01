@@ -1,6 +1,6 @@
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.81 Beta
+# Version 0.9 Beta
 # https://github.com/zus2/PyTrain
 #
 # © 2025 Paul Walsh
@@ -16,9 +16,9 @@ dcsteps = 12 # number of +/- button presses to reach full forward speed: -s to +
 dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
 dcmax = 80 # max forward dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
 dcmaxr = 50 # max reverse dc power (%) ( range 0 - 90 (hard code limit)) - set to 0 for trams ?
-dcacc = 20 # acceleration smoothness - 1 (aggressive) - 80 (gentle) - try 20
+dcacc = 20 # acceleration - 1 (aggressive) - 80 (gentle) - try 20
 brake = 600 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
-BROADCASTCHANNEL = 1  # channel for 2nd hub ( 0 - 255 ) Use None if no other hub consumes power !
+BROADCASTCHANNEL = None  # channel for 2nd hub ( 0 - 255 ) Use None if no other hub consumes power !
 INACTIVITY = 5 # mins before shutdown if no button pressed and train stationary
 dirmotorA = -1       # Hub motor A Direction clockwise 1 or -1
 dirmotorB = 1       # Hub motor B Direction clockwise 1 or -1
@@ -64,8 +64,8 @@ async def drive(target):
     await wait(0)
 
     # 2 deltas for accel and decel
-    smooth1 = 5 #  1 - 10 , try 5 - this defines the agressiveness of accel - higher is steadier
-    smooth2 = 3 #  1 - 10 , try 2 - this defines the agressiveness of decel - decrease for faster response
+    smooth1 = 3 #  1 - 10 , try 4 - this defines the agressiveness of accel - higher is smoother
+    smooth2 = 2 #  1 - 10 , try 2 - this defines the agressiveness of decel - decrease for faster response
 
     delta1 = max(1,round(abs(target - dc)/smooth1)) 
     delta2 = max(1,round(abs(target - dc)/smooth2)) 
@@ -107,23 +107,6 @@ async def drive(target):
         #print (m)
         if (m): m.dc(dc)
 
-class AsyncLock:
-    def __init__(self):
-        self._busy = False
-
-    def __aenter__(self):
-        while self._busy:
-            yield
-
-        self._held = True
-
-        return self
-
-    async def __aexit__(self, t, e, s):
-        self._busy = False
-
-btbusy = AsyncLock()
-
 # --- update_broadcast() - activate and update system broadcast dc and light 
 async def broadcast():
     await wait(0)
@@ -137,15 +120,14 @@ async def broadcast():
 
             bdata = (dc, 0)
 
-            async with btbusy:
-                try:
-                    await hub.ble.broadcast(bdata)
-                    thisdc = dc
-                    print("broadcast data updated",bdata)
-            
-                except OSError as ex:
-                # frequent errors
-                    print ("broadcast error 1",ex)
+            try:
+                await hub.ble.broadcast(bdata)
+                thisdc = dc
+                #print("broadcast data updated",bdata)
+        
+            except OSError as ex:
+            # frequent errors
+                print ("broadcast error 1",ex)
                 
         await wait(50)
 
@@ -408,12 +390,22 @@ async def heartbeat():
         await wait(60000) # 1 minute
 
 # --- main() 
-async def main():
+
+if BROADCASTCHANNEL:
+    async def main():
+            await multitask(
+                controller(),
+                ems(),
+                heartbeat(),
+                broadcast()
+            )
+else:
+    async def main():
         await multitask(
             controller(),
             ems(),
             heartbeat(),
-            broadcast()
+            #broadcast()
         )
 
 # --------------
