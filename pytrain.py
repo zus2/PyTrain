@@ -1,53 +1,27 @@
-
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.8 Beta
+# Version 0.81 Beta
 # https://github.com/zus2/PyTrain
 #
-# requires https://code.pybricks.com/ , LEGO City hub, LEGO BLE remote control
-#
+# © 2025 Paul Walsh
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
 # INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-# PARTICULAR PURPOSE AND NONINFRINGEMENT.
-# 
-# Features:
-# Asynchronous speed change and stop commands for inertia effect 
-# Customisable speed ramp max, min and granularity
-# Crawl speed calibration adjustable in programme 
-# Synced indicator led for Go, Crawl, Stop, Ready, Calibrate 
-# v0.2 Added stop script or shutdown hub in programme using center button
-# v0.3 Added support for 2nd motor and initial support for sensor motors
-# v0.4 Cleaned up Motor direction logic 
-# v0.5 Added heartbeat auto-shutdown and user input sanity checks
-# v0.55 Added storage and reload for dcmin from calibrate()
-# v0.6 Added support for Technic and City hubs 
-# v0.7 Added separate reverse speed limit which can be 0
-# v0.81 Added broadcast to second hub , changed broadcast code logic 
-#
-# To Do: 
-#  
-# add lights like @mpersand
-# auto reconnect remote
-# .. and much more
-#
-# Thanks to: 
-# Lok24 https://www.eurobricks.com/forum/forums/topic/187081-control-your-trains-without-smart-device-with-pybricks/
-# @mpersand https://github.com/and-ampersand-and/PyBricks-Train-Motor-Control-Script?files=1:
-# and the Pybricks team of course .. 
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. See LICENCE in the official repository.
 
 # ----------
 # --- User defined values
 # ----------
 
-dcsteps = 12 # number of duty cycle steps: -s to +s (range 5 - 100)
+dcsteps = 12 # number of +/- button presses to reach full forward speed: -s to +s (range 5 - 100)
 dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
-dcmax = 75 # max dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
-dcmaxr = 35 # max reverse dc power (%) ( range 0 - 90 (hard code limit))
-dcacc = 20 # acceleration smoothness - 1 (aggressive) - 100 (gentle) 
+dcmax = 80 # max forward dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
+dcmaxr = 50 # max reverse dc power (%) ( range 0 - 90 (hard code limit)) - set to 0 for trams ?
+dcacc = 20 # acceleration smoothness - 1 (aggressive) - 80 (gentle) - try 20
 brake = 600 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
-BROADCASTCHANNEL = None  # broadcast channel for 2nd hub ( Use None or 0 - 255 ) - consumes power !
-dirmotorA = -1       # A Direction clockwise 1 or -1
-dirmotorB = 1       # B Direction clockwise 1 or -1
+BROADCASTCHANNEL = 1  # channel for 2nd hub ( 0 - 255 ) Use None if no other hub consumes power !
+INACTIVITY = 5 # mins before shutdown if no button pressed and train stationary
+dirmotorA = -1       # Hub motor A Direction clockwise 1 or -1
+dirmotorB = 1       # Hub motor B Direction clockwise 1 or -1
 
 # ----------
 # --- Main programme
@@ -67,7 +41,7 @@ from pybricks.iodevices import PUPDevice
 
 # --- function descriptions
 # drive() - takes a dc target value from EMS and changes motor speed with simulated inertia
-# broadcast() - permanent broadcast of dc and light values in separate task
+# broadcast() - activate and update 100ms system broadcast of dc and light values
 # dcprofile() - set up s discrete duty cycle drive steps from threshold (dcmin) to dcmax - does not have to be linear 
 # getmotors() -  check ports for connected motors
 # stop() - send out dc of 0 and sets a wait period before traction can recommence to prevent overruns
@@ -133,25 +107,47 @@ async def drive(target):
         #print (m)
         if (m): m.dc(dc)
 
-# --- broadcast() - broadcast dc and light in separate task
-async def broadcast():   
+class AsyncLock:
+    def __init__(self):
+        self._busy = False
+
+    def __aenter__(self):
+        while self._busy:
+            yield
+
+        self._held = True
+
+        return self
+
+    async def __aexit__(self, t, e, s):
+        self._busy = False
+
+btbusy = AsyncLock()
+
+# --- update_broadcast() - activate and update system broadcast dc and light 
+async def broadcast():
     await wait(0)
+ 
+    thisdc = 0
 
     while True:
-        bdata = (dc, 0)
+        await wait(0)
 
-        try:
-            await hub.ble.broadcast(bdata)
-            #print("sent ..")
-            #ble = True
-            #break
+        if thisdc != dc:
+
+            bdata = (dc, 0)
+
+            async with btbusy:
+                try:
+                    await hub.ble.broadcast(bdata)
+                    thisdc = dc
+                    print("broadcast data updated",bdata)
             
-        except OSError as ex:
-            print ("broadcast error",ex, ex.errno)
-            await wait(10)
-
-        await wait(10)
-        
+                except OSError as ex:
+                # frequent errors
+                    print ("broadcast error 1",ex)
+                
+        await wait(50)
 
 # --- dcprofile() - build speed ramp
 def dcprofile(mode): 
@@ -183,10 +179,10 @@ def getmotors(motor):
 
         try:
             device = PUPDevice(port)
-            id = device.info()['id']
+            id = device.info()["id"]
             print("device",id,"on",x)
 
-            if device.info()['id'] < 3:
+            if device.info()["id"] < 3:
                 print("DC motor on",port)
                 motor.append(DCMotor(port,motordirection[x]))
 
@@ -280,7 +276,6 @@ async def calibrate():
 
         await wait(100)
 
-
 # --- go(cc) - set status lights and disable button briefly
 async def go(cc):
     await wait(0)
@@ -297,26 +292,29 @@ async def go(cc):
     else:
         led = LED_GO4
     
+    # getting occasional errors updating the remote led
     try:
         await remote.light.on(led)
     except OSError as ex:
         print("** failed to set the LED in go() **",ex)
-
+    
     hub.light.on(led)
     await wait(BUTTONDELAY)                 
 
 # --- ems() - convert controller presses to motor commands
-async def ems():
-    global dc , cc , dcramp , dcacc 
+async def ems(): 
+    # check current dc (dc) versus target dc from controller (cc)
+
     await wait(0)
 
     while True:
-        # check current dc (dc) versus target dc from controller (cc)
-        
+        await wait(0)
+
         direction = copysign(1,cc)
         target = round(direction*dcramp[abs(cc)])
 
-        if dc != target:
+        # x is for system shutdown
+        if not dc in (target, "x"):
             #print ("drive",target)
             await drive(target)
         
@@ -326,7 +324,8 @@ async def ems():
 
 # --- controller() - monitor the remote presses
 async def controller():
-    global cc , dcsteps , beat , remote
+    global cc , beat , dc
+
     await wait(0)    
     
     while True:
@@ -337,42 +336,32 @@ async def controller():
             await wait(1000)
             pressed = {}
 
-            '''
-            # reconnect is not working within multitasking ..
-            try:
-                remote = Remote(timeout=1000)
-                await wait(100)
-                print (" remote reconnected ")
-            except OSError as ex:
-                print (" remote still not connected ")
-            '''
-
         if (len(pressed)):
 
             beat = 1 # reset heartbeat()
     
             if Button.LEFT_PLUS in pressed:
                 cc = cc + 1 if cc < dcsteps+1 else dcsteps+1
-                print('remote',cc)
+                print("remote",cc)
                 if cc == 0: await stop()
                 else: await go(cc)
                 
             elif Button.LEFT_MINUS in pressed:
                 cc = cc - 1 if cc > -(dcsteps+1) else -(dcsteps+1)
-                print('remote',cc)
+                print("remote",cc)
                 if cc == 0: await stop()
                 else: await go(cc)
                    
             elif Button.LEFT in pressed:
                 cc = 0
-                print('remote',cc)
+                print("remote",cc)
                 await stop()
                 
             elif Button.CENTER in pressed:
                 # press once to stop the train AND the programme
                 # hold 2 secs to shutdown hub
                 cc = 0
-                print('remote center',cc)
+                print("remote center",cc)
                 await stop()
                 count = 0
                 while Button.CENTER in pressed:
@@ -381,7 +370,9 @@ async def controller():
                     if (count == 10): # 1 seconds ( plus brake in stop() )
                         print("Shutting down hub ...")
                         await remote.light.on(LED_STOP)
-                        await wait(100)
+                        if BROADCASTCHANNEL: 
+                            dc = "x" #shut down the second hub
+                            await wait(1000)
                         hub.system.shutdown() 
                     await wait(100)
                 
@@ -392,44 +383,37 @@ async def controller():
         # also see go()
         await wait(50)
 
-# --- heartbeat() - shutdown after specified period of inactivity
+# --- heartbeat() - shutdown after INACTIVITY mins of inactivity
 async def heartbeat():
-    await wait(0)
     global beat
-    _death = 5
 
+    await wait(0)
+    
     while True:
         # if train is running reset heartbeat 
         if cc != 0: 
             beat = 0 
 
         # shutdown after 5 minutes if not running and no remote buttons pressed
-        elif beat >= _death: 
-            print ("no activity for 5 minutes - shutting down ..")
-            await wait(100)
+        elif beat >= INACTIVITY: 
+            print ("no activity for",INACTIVITY,"minutes - shutting down ..")
+            if BROADCASTCHANNEL: dc = "x" #shut down the second hub
+            wait(100)
             hub.system.shutdown()
-
+            
         beat += 1
 
-        print ("heartbeat:",beat,"of",_death)
+        print ("heartbeat:",beat,"of",INACTIVITY)
 
         await wait(60000) # 1 minute
 
 # --- main() 
 async def main():
-    if BROADCASTCHANNEL:
         await multitask(
             controller(),
             ems(),
             heartbeat(),
             broadcast()
-        )
-    else:
-        await multitask(
-            controller(),
-            ems(),
-            heartbeat(),
-            #broadcast()
         )
 
 # --------------
@@ -451,19 +435,19 @@ if not dcmin in range(10,41):
     print (sm[0],"dcmin",sm[1],_bad,sm[2],dcmin,sm[3])
 if not dcmax in range(41,91): 
     _bad = dcmax
-    dcmax = 75
+    dcmax = 80
     print (sm[0],"dcmax",sm[1],_bad,sm[2],dcmax,sm[3])
 if not dcmaxr in range(0,91): 
     _bad = dcmaxr
     dcmaxr = 70
     print (sm[0],"dcmaxr",sm[1],_bad,sm[2],dcmaxr,sm[3])
-if not dcacc in range(1,101): 
+if not dcacc in range(1,81): 
     _bad = dcacc
     dcacc = 20
     print (sm[0],"dcacc",sm[1],_bad,sm[2],dcacc,sm[3])
 if not brake in range(1,2001): 
     _bad = brake
-    brake = 700
+    brake = 600
     print (sm[0],"brake",sm[1],_bad,sm[2],brake,sm[3])
 if not dirmotorA in (1,-1): 
     _bad = dirmotorA
@@ -513,11 +497,10 @@ print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
 # --- set up remote
 print ("Looking for remote ..")
 try:
-    remote = Remote(timeout=10000)
+    remote = Remote(timeout=20000)
     remote.light.on(LED_READY)
 except OSError as ex:
     print ("Not found - shutting down ..")
-    wait(100)
     hub.system.shutdown()
 
 # check for storage dcmin
