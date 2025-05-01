@@ -44,6 +44,7 @@ The Pybricks Train Controller is a Python-based script designed to enhance train
 4. Adjust user settings as needed in Pybricks Code including setting the motor directions.
 5. Stopping the program: Quickly press the center button.
 6. Shutting down the hub: Hold the center button for 2 seconds.
+7. To use a second hub install pytrainfollower.py on it 
 
 ## Setting Crawl Speed
 1. Press and hold the left red button until you see a purple light.
