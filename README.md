@@ -36,6 +36,7 @@ The Pybricks Train Controller is a Python-based script designed to enhance train
 7. Open the file in Pybricks Code.
 8. Connect to your hub using the Bluetooth browser in Pybricks Code.
 9. Run pytrain.py in the Pybricks Code editor to load the program onto your hub.
+10. To use a second hub install pytrainfollower.py on it 
 
 ## Instructions
 1. Run pytrain.py from Pybricks Code or turn on your hub and press the start button a second time to start the program.
@@ -44,7 +45,6 @@ The Pybricks Train Controller is a Python-based script designed to enhance train
 4. Adjust user settings as needed in Pybricks Code including setting the motor directions.
 5. Stopping the program: Quickly press the center button.
 6. Shutting down the hub: Hold the center button for 2 seconds.
-7. To use a second hub install pytrainfollower.py on it 
 
 ## Setting Crawl Speed
 1. Press and hold the left red button until you see a purple light.
