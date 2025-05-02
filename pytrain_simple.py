@@ -57,18 +57,6 @@ def getmotors(motor):
             print("no device on",port)
             motor.append("")
 
-def connect_remote():
-    try:
-        # Search for a remote for 5 seconds.
-        my_remote = Remote(timeout=15000)
-
-        print("Connected!")
-
-        return my_remote
-        
-    except OSError:
-        print("Could not find the remote.")
-
 def controller():
     INITIAL_DELAY = 350
     REPEAT_DELAY = 100
@@ -132,7 +120,7 @@ def drive(p, dc):
     print(dc)
     return dc
 
-# --- set up hub
+# --- set up hub and remote
 hub = ThisHub(broadcast_channel=None)
 
 # --- clear terminal 
@@ -144,9 +132,10 @@ print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
 # --- set up remote 
 print ("Looking for remote ..")
 try:
-    remote = Remote(timeout=20000)
+    remote = Remote(timeout=15000)
 except OSError as ex:
     print ("Not found - shutting down ..")
+    wait(1000)
     hub.system.shutdown() 
 
 # --- define  motors - max 2 for CityHub
