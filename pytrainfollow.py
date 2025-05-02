@@ -9,6 +9,7 @@ OBSERVECHANNEL = 1 #  Observer channel must match Broadcast channel in pytrain.p
 dirmotorA = -1       # A Direction clockwise 1 or -1
 dirmotorB = 1       # B Direction clockwise 1 or -1
 INACTIVITY = 5 # shut down the hub after this many minutes
+OUTPUT = False      # set to true to show extra info for debugging
 
 # ----------
 # --- Main programme
@@ -20,6 +21,7 @@ from pybricks.parameters import Color, Direction, Port
 from pybricks.pupdevices import DCMotor, Motor
 from pybricks.iodevices import PUPDevice
 from pybricks.tools import multitask, run_task, wait
+from pybricks.hubs import ThisHub
 
 # ----------
 # --- functions
@@ -33,8 +35,8 @@ async def heartbeat():
 
     while True:
         # if train is running reset heartbeat 
-        #if dc != 0: 
-        #    beat = 0 
+        if dc != 0: 
+            beat = 0 
 
         # shutdown after 5 minutes if not running and no remote buttons pressed
         elif beat >= INACTIVITY: 
@@ -85,17 +87,20 @@ async def drive():
     while True:
         # send drive command to motors 1 and 2
         if currentdc != dc:
+
             for m in motor:
                 if (m): m.dc(dc)
-            currentdc = dc
+ 
             if dc: 
                 hub.light.on(LED_GO4)
-                beat = 0
             else:
                 hub.light.on(LED_READY)
-            print (dc)
-                
 
+            if (OUTPUT): print (dc)
+
+            currentdc = dc
+            beat = 0
+                
         await wait(10)
 
 # --- listen()
@@ -109,8 +114,7 @@ async def listen():
         try:
             data = hub.ble.observe(OBSERVECHANNEL)
         except Exception as ex:
-            print("problem receiving:",ex)
-            hub.light.on(LED_STOP)
+            print("Unknown problem observing:",ex)
 
         if data is None:
             #hub.light.on(LEDnotreceiving)
@@ -176,19 +180,12 @@ LED_STOP = Color.RED*0.5  # brake
 LED_READY = Color.ORANGE*1.0  # loco ready and idling
 LED_CALIBRATE = Color.VIOLET # calibrate crawl speed in programme
 
+# --- find and set up hub - City or Technic
+hub = ThisHub(broadcast_channel=None, observe_channels=[OBSERVECHANNEL])
+
 # --- clear terminal 
 print("\x1b[H\x1b[2J", end="")
 print("Pytrain (Follow) - Asynchronous Train Controller")
-
-# --- find and set up hub - City or Technic
-try: 
-    from pybricks.hubs import CityHub
-    hub = CityHub(broadcast_channel=None, observe_channels=[OBSERVECHANNEL])
-except: 
-    try: 
-        from pybricks.hubs import TechnicHub
-        hub = TechnicHub(broadcast_channel=None, observe_channels=[OBSERVECHANNEL])
-    except: print("no suitable hubs found")
 print(hub.system.name())
 print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
 

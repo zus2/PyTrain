@@ -12,16 +12,17 @@
 # --- User defined values
 # ----------
 
-dcsteps = 12 # number of +/- button presses to reach full forward speed: -s to +s (range 5 - 100)
-dcmin = 25 # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
-dcmax = 80 # max forward dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
-dcmaxr = 50 # max reverse dc power (%) ( range 0 - 90 (hard code limit)) - set to 0 for trams ?
-dcacc = 20 # acceleration - 1 (aggressive) - 80 (gentle) - try 20
-brake = 600 # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
+dcsteps = 12        # number of +/- button presses to reach full forward speed: -s to +s (range 5 - 100)
+dcmin = 25          # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
+dcmax = 80          # max forward dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
+dcmaxr = 50         # max reverse dc power (%) ( range 0 - 90 (hard code limit)) - set to 0 for trams ?
+dcacc = 20          # acceleration - 1 (aggressive) - 80 (gentle) - try 20
+BRAKE = 600         # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
 BROADCASTCHANNEL = None  # channel for 2nd hub ( 0 - 255 ) Use None if no other hub consumes power !
-INACTIVITY = 5 # mins before shutdown if no button pressed and train stationary
-dirmotorA = -1       # Hub motor A Direction clockwise 1 or -1
+INACTIVITY = 5      # mins before shutdown if no button pressed and train stationary
+dirmotorA = -1      # Hub motor A Direction clockwise 1 or -1
 dirmotorB = 1       # Hub motor B Direction clockwise 1 or -1
+OUTPUT = False      # set to true to show extra info for debugging
 
 # ----------
 # --- Main programme
@@ -34,23 +35,11 @@ from pybricks.pupdevices import DCMotor, Motor, Remote
 from pybricks.tools import multitask, run_task, wait
 from umath import copysign
 from pybricks.iodevices import PUPDevice
+from pybricks.hubs import ThisHub
 
 # ----------
 # --- functions
 # ----------
-
-# --- function descriptions
-# drive() - takes a dc target value from EMS and changes motor speed with simulated inertia
-# broadcast() - activate and update 100ms system broadcast of dc and light values
-# dcprofile() - set up s discrete duty cycle drive steps from threshold (dcmin) to dcmax - does not have to be linear 
-# getmotors() -  check ports for connected motors
-# stop() - send out dc of 0 and sets a wait period before traction can recommence to prevent overruns
-# calibrate() - set the crawl speed in programme using left stop button (hold,set,save)
-# go() - sets status lights and briefly blocks further +/- presses for t ms
-# ems() - energy management system monitors and changes the speed of loco 
-# controller() - handles button presses and sets remote and hub status lights
-# heartbeat() - shut down after a period of inactivity
-# main() - the main loop
 
 async def drive(target):
     """
@@ -70,29 +59,28 @@ async def drive(target):
     delta1 = max(1,round(abs(target - dc)/smooth1)) 
     delta2 = max(1,round(abs(target - dc)/smooth2)) 
 
-    dcstart = dcmin - delta2 # kickstart using delta1 or delta2
-    dcstop = dcmin - delta2 # kickstop to prevent long tail slowdown blocking responsiveness
+    dckickstart = round(dcmin / 2) # kickstart in case delta very small 
+    dckickstop = round(dcmin / 2) # kickstop to prevent long tail slowdown blocking responsiveness
 
     # positive change
     if target > dc: 
         if dc >= 0: #forward accel
-            dc = max(dcstart, dc + delta1) 
-        elif dc < -dcstop: #reverse decel
+            dc = max(dckickstart, dc + delta1) 
+        elif dc < -dckickstop: #reverse decel
             dc = dc + delta2
         else:
             dc = 0
     # negative change
     else:
         if dc <= 0: #accel reverse
-            dc = min(-dcstart,dc - delta1) 
-        elif dc > dcstop: #forward decel
+            dc = min(-dckickstart,dc - delta1) 
+        elif dc > dckickstop: #forward decel
             dc = dc - delta2
         else:
             dc = 0
     
-    print("dc target:",target,"actual dc",dc,"controller",cc)
-    #print (hub.battery.current())
-
+    if (OUTPUT): print("dc target:",target,"actual dc",dc,"controller",cc)
+    
     # hard code dc safety limit during development ( and maybe permanent )
     dc = copysign(min(90,abs(dc)),dc)
 
@@ -100,15 +88,18 @@ async def drive(target):
     if dc < -dcmaxr: 
         dc = -dcmaxr
         cc += 1 # prevent racing to un unreachable target dc ( from cc )
-        print("reverse speed limit reached:",dcmaxr)
+        if (OUTPUT): print("reverse speed limit reached:",dcmaxr)
 
     # send drive command to motors 1 and 2
     for m in motor:
         #print (m)
         if (m): m.dc(dc)
 
-# --- update_broadcast() - activate and update system broadcast dc and light 
 async def broadcast():
+    """
+    Activate and update 100ms system broadcast of dc and light values
+
+    """
     await wait(0)
  
     thisdc = 0
@@ -123,18 +114,22 @@ async def broadcast():
             try:
                 await hub.ble.broadcast(bdata)
                 thisdc = dc
-                #print("broadcast data updated",bdata)
-        
+                # if (OUTPUT): print("broadcast data updated",bdata)
             except OSError as ex:
-            # frequent errors
-                print ("broadcast error 1",ex)
+                # frequent errors
+                if (OUTPUT): print ("broadcast error 1",ex)
                 
         await wait(50)
 
-# --- dcprofile() - build speed ramp
-def dcprofile(mode): 
-    # map the loco power curve - for now threshold and then linear - the drive function can tweak
-    # this is called if threshold dcmin is changed live
+def dcprofile(mode):
+    """
+    # Set up s discrete duty cycle steps from threshold (dcmin) to dcmax 
+    # Map the loco power curve - for now threshold and then linear 
+    # This is also called if threshold dcmin is changed live
+
+    Args:
+        mode (string):  Build normal dcramp or granular for calibration
+    """
     global dcramp, dcsteps , dcmin , dcmax
 
     dcramp={} #reset
@@ -151,10 +146,13 @@ def dcprofile(mode):
 
     print("dcsteps",dcsteps,dcramp)    
 
-
-# --- getmotors() - auto detect DC and technic motors
 def getmotors(motor):
+    """
+    Check ports and auto add DC or Technic motors
 
+    Args:
+        motor(Motor()) - the motor object 
+    """
     for x in (0,1):
 
         port = (Port.A,Port.B)[x]
@@ -178,27 +176,29 @@ def getmotors(motor):
 
         #print(motor)
 
-# --- stop()
-async def stop():
-    global brake
 
+async def stop():
+    """
+    Sets the stop LED and a wait period before traction can recommence to prevent overruns
+    """
     await wait(0)
 
     # avoid overruns
     try:
         await remote.light.on(LED_STOP)
-    except:
+    except OSError:
         pass # not critical
     
     hub.light.on(LED_STOP)
 
-    print("brake .. (",brake,"ms )")
-    await wait(brake)
+    if(OUTPUT): print("brake .. (",BRAKE,"ms )")
+    await wait(BRAKE)
 
     try:
         await remote.light.on(LED_READY)
-    except:
+    except OSError:
         pass # not critical
+    
     hub.light.on(LED_READY)
 
     # stop button also used for crawl speed calibration
@@ -210,8 +210,10 @@ async def stop():
             await calibrate()
         await wait(100)
 
-# --- calibrate() - set the crawl speed dcmin using contoller
 async def calibrate():
+    """
+    Set the crawl speed dcmin in programme using left buttons (hold,set,save)
+    """
     global dcmin , cc
 
     await wait(0)
@@ -223,7 +225,7 @@ async def calibrate():
     
     try:
         await remote.light.on(LED_CALIBRATE)
-    except:
+    except OSError:
         pass # not critical
     
     hub.light.on(LED_CALIBRATE)
@@ -258,8 +260,13 @@ async def calibrate():
 
         await wait(100)
 
-# --- go(cc) - set status lights and disable button briefly
 async def go(cc):
+    """
+    Sets status lights and briefly blocks further +/- presses for t ms
+
+    Args:
+        cc(int): Controller click count
+    """
     await wait(0)
 
     lowcc = abs(cc)
@@ -281,12 +288,19 @@ async def go(cc):
         print("** failed to set the LED in go() **",ex)
     
     hub.light.on(led)
+
+    if led == LED_CRAWL:
+        if(OUTPUT): print("crawl .. (",BRAKE/2,"ms )")
+        # pause briefly on Crawl 
+        await wait(BRAKE/2) 
+    
     await wait(BUTTONDELAY)                 
 
-# --- ems() - convert controller presses to motor commands
 async def ems(): 
-    # check current dc (dc) versus target dc from controller (cc)
-
+    """
+    Check current dc (dc) versus target dc from controller (cc)
+    Energy management system monitors and changes the speed of loco 
+    """
     await wait(0)
 
     while True:
@@ -304,8 +318,10 @@ async def ems():
         # try 20 (200ms) for s=12 , less if s higher 
         await wait(dcacc * 10)
 
-# --- controller() - monitor the remote presses
 async def controller():
+    """
+    Handles button presses and sets remote and hub status lights
+    """
     global cc , beat , dc
 
     await wait(0)    
@@ -324,26 +340,26 @@ async def controller():
     
             if Button.LEFT_PLUS in pressed:
                 cc = cc + 1 if cc < dcsteps+1 else dcsteps+1
-                print("remote",cc)
+                if (OUTPUT):print("remote",cc)
                 if cc == 0: await stop()
                 else: await go(cc)
                 
             elif Button.LEFT_MINUS in pressed:
                 cc = cc - 1 if cc > -(dcsteps+1) else -(dcsteps+1)
-                print("remote",cc)
+                if (OUTPUT):print("remote",cc)
                 if cc == 0: await stop()
                 else: await go(cc)
                    
             elif Button.LEFT in pressed:
                 cc = 0
-                print("remote",cc)
+                if (OUTPUT):print("remote",cc)
                 await stop()
                 
             elif Button.CENTER in pressed:
                 # press once to stop the train AND the programme
                 # hold 2 secs to shutdown hub
                 cc = 0
-                print("remote center",cc)
+                if (OUTPUT):print("remote center",cc)
                 await stop()
                 count = 0
                 while Button.CENTER in pressed:
@@ -365,8 +381,10 @@ async def controller():
         # also see go()
         await wait(50)
 
-# --- heartbeat() - shutdown after INACTIVITY mins of inactivity
 async def heartbeat():
+    """
+    Shut down after a INACTIVITY minutes of inactivity
+    """
     global beat
 
     await wait(0)
@@ -389,8 +407,9 @@ async def heartbeat():
 
         await wait(60000) # 1 minute
 
-# --- main() 
-
+"""
+Set up multitasking with conditional broadcasting
+"""
 if BROADCASTCHANNEL:
     async def main():
             await multitask(
@@ -437,10 +456,10 @@ if not dcacc in range(1,81):
     _bad = dcacc
     dcacc = 20
     print (sm[0],"dcacc",sm[1],_bad,sm[2],dcacc,sm[3])
-if not brake in range(1,2001): 
-    _bad = brake
-    brake = 600
-    print (sm[0],"brake",sm[1],_bad,sm[2],brake,sm[3])
+if not BRAKE in range(1,2001): 
+    _bad = BRAKE
+    BRAKE = 600
+    print (sm[0],"brake",sm[1],_bad,sm[2],BRAKE,sm[3])
 if not dirmotorA in (1,-1): 
     _bad = dirmotorA
     dirmotorA = 1
@@ -471,22 +490,16 @@ LED_STOP = Color.RED*0.5  # brake
 LED_READY = Color.ORANGE*1.0  # loco ready and idling
 LED_CALIBRATE = Color.VIOLET # calibrate crawl speed in programme
 
+# --- set up hub
+hub = ThisHub(broadcast_channel=BROADCASTCHANNEL)
+
 # --- clear terminal 
 print("\x1b[H\x1b[2J", end="")
 print("Pytrain - Asynchronous Train Controller")
-# --- find and set up hub - City or Technic
-try: 
-    from pybricks.hubs import CityHub
-    hub = CityHub(broadcast_channel=BROADCASTCHANNEL)
-except: 
-    try: 
-        from pybricks.hubs import TechnicHub
-        hub = TechnicHub(broadcast_channel=BROADCASTCHANNEL)
-    except: print("no suitable hubs found")
 print(hub.system.name())
 print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
 
-# --- set up remote
+# --- set up remote 
 print ("Looking for remote ..")
 try:
     remote = Remote(timeout=20000)
