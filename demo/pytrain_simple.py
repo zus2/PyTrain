@@ -1,9 +1,14 @@
+# pytrain_simple
+# v0.1
+
+
 # ----------
 # --- User defined values
 # ----------
 
+# most of these for future use only
 dcsteps = 12        # number of +/- button presses to reach full forward speed: -s to +s (range 5 - 100)
-dcmin = 25          # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
+dcmin = 20          # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
 dcmax = 80          # max forward dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
 dcmaxr = 50         # max reverse dc power (%) ( range 0 - 90 (hard code limit)) - set to 0 for trams ?
 dcacc = 20          # acceleration - 1 (aggressive) - 80 (gentle) - try 20
@@ -13,7 +18,6 @@ INACTIVITY = 5      # mins before shutdown if no button pressed and train statio
 dirmotorA = -1      # Hub motor A Direction clockwise 1 or -1
 dirmotorB = 1       # Hub motor B Direction clockwise 1 or -1
 OUTPUT = False      # set to true to show extra info for debugging
-
 
 from pybricks.hubs import ThisHub
 from pybricks.pupdevices import DCMotor, Light, Remote, Motor
@@ -90,20 +94,29 @@ def controller():
                        
 def drive(p, dc):
     pressed = p
-    dc = dc
 
     if (Button.LEFT_PLUS) in pressed:
+            if dc == 0: dc = dcmin
             if dc < 100: dc += 2
+            if abs(dc) < dcmin*0.7: dc = 0
     elif (Button.LEFT_MINUS) in pressed:
+            if dc == 0: dc = -dcmin
             if dc > -100: dc -= 2
+            if abs(dc) < dcmin*0.7: dc = 0
     elif (Button.LEFT) in pressed:
+            hub.light.on(Color.RED)
             while abs(dc) > 10:
                 dc = dc - 10 if dc > 0 else dc + 10
                 motor[0].dc(dc)
                 print(dc)
                 wait(100)
             dc = 0
-        
+    
+    if dc == 0:
+        hub.light.on(Color.RED)
+    else:
+        hub.light.on(Color.CYAN)
+
     motor[0].dc(dc)
     print(dc)
     return dc
