@@ -1,9 +1,10 @@
 # pytrain_simple.py
-# v0.2
+# v0.21
 # https://github.com/zus2/PyTrain
 #
-# a simple Pybricks train motor controller - with a great controller routine!
-# auto detects all hubs and up to 2 motors, DC or Technic
+# A simple Pybricks train motor controller - with a great controller routine
+# for great playability. Easy to customise simple logic.
+# Auto detects all hubs and up to 2 motors, DC or Technic
 #
 # Tested with v3.6.1 (Pybricks Code v2.6.0)
 #
@@ -112,7 +113,7 @@ def drive(p, dc):
                 for m in motor:
                     if (m): m.dc(dc)
                 print(dc)
-                wait(100)
+                wait(140)
             dc = 0
     
     if dc == 0:
@@ -120,9 +121,9 @@ def drive(p, dc):
         # hard coded delay for added UX
         wait(STOP_DELAY)
         # orange for ready to move
-        hub.light.on(Color.ORANGE*0.8)
+        hub.light.on(Color.ORANGE*0.4)
     else:
-        hub.light.on(Color.CYAN*0.7)
+        hub.light.on(Color.CYAN*0.5)
 
     # send drive command to motors 1 and 2
     for m in motor:
@@ -131,9 +132,22 @@ def drive(p, dc):
     print(dc)
     return dc
 
-### Set Up
-remote = connect_remote()
-hub = ThisHub() 
+# --- set up hub
+hub = ThisHub(broadcast_channel=None)
+
+# --- clear terminal 
+print("\x1b[H\x1b[2J", end="")
+print("Pytrain Simple - Train Controller")
+print(hub.system.name())
+print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
+
+# --- set up remote 
+print ("Looking for remote ..")
+try:
+    remote = Remote(timeout=20000)
+except OSError as ex:
+    print ("Not found - shutting down ..")
+    hub.system.shutdown() 
 
 # --- define  motors - max 2 for CityHub
 motor = []
