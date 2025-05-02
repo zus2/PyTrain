@@ -1,23 +1,14 @@
 # pytrain_simple
-# v0.1
+# v0.2
 
 
 # ----------
 # --- User defined values
 # ----------
 
-# most of these for future use only
-dcsteps = 12        # number of +/- button presses to reach full forward speed: -s to +s (range 5 - 100)
-dcmin = 20          # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
-dcmax = 80          # max forward dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
-dcmaxr = 50         # max reverse dc power (%) ( range 0 - 90 (hard code limit)) - set to 0 for trams ?
-dcacc = 20          # acceleration - 1 (aggressive) - 80 (gentle) - try 20
-BRAKE = 600         # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
-BROADCASTCHANNEL = None  # channel for 2nd hub ( 0 - 255 ) Use None if no other hub consumes power !
-INACTIVITY = 5      # mins before shutdown if no button pressed and train stationary
-dirmotorA = -1      # Hub motor A Direction clockwise 1 or -1
-dirmotorB = 1       # Hub motor B Direction clockwise 1 or -1
-OUTPUT = False      # set to true to show extra info for debugging
+DCMIN = 20          # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
+DIRMOTORA = -1      # Hub motor A Direction clockwise 1 or -1
+DIRMOTORB = 1       # Hub motor B Direction clockwise 1 or -1
 
 from pybricks.hubs import ThisHub
 from pybricks.pupdevices import DCMotor, Light, Remote, Motor
@@ -96,28 +87,32 @@ def drive(p, dc):
     pressed = p
 
     if (Button.LEFT_PLUS) in pressed:
-            if dc == 0: dc = dcmin
+            if dc == 0: dc = DCMIN
             if dc < 100: dc += 2
-            if abs(dc) < dcmin*0.7: dc = 0
+            if abs(dc) < DCMIN*0.7: dc = 0
     elif (Button.LEFT_MINUS) in pressed:
-            if dc == 0: dc = -dcmin
+            if dc == 0: dc = -DCMIN
             if dc > -100: dc -= 2
-            if abs(dc) < dcmin*0.7: dc = 0
+            if abs(dc) < DCMIN*0.7: dc = 0
     elif (Button.LEFT) in pressed:
-            hub.light.on(Color.RED)
+            hub.light.on(Color.RED*0.5)
             while abs(dc) > 10:
                 dc = dc - 10 if dc > 0 else dc + 10
-                motor[0].dc(dc)
+                for m in motor:
+                    if (m): m.dc(dc)
                 print(dc)
                 wait(100)
             dc = 0
     
     if dc == 0:
-        hub.light.on(Color.RED)
+        hub.light.on(Color.RED*0.5)
     else:
-        hub.light.on(Color.CYAN)
+        hub.light.on(Color.CYAN*0.7)
 
-    motor[0].dc(dc)
+    # send drive command to motors 1 and 2
+    for m in motor:
+        if (m): m.dc(dc)
+
     print(dc)
     return dc
 
@@ -127,8 +122,8 @@ hub = ThisHub()
 
 # --- define  motors - max 2 for CityHub
 motor = []
-motordirectionA = Direction.CLOCKWISE if dirmotorA == 1 else Direction.COUNTERCLOCKWISE
-motordirectionB = Direction.CLOCKWISE if dirmotorB == 1 else Direction.COUNTERCLOCKWISE
+motordirectionA = Direction.CLOCKWISE if DIRMOTORA == 1 else Direction.COUNTERCLOCKWISE
+motordirectionB = Direction.CLOCKWISE if DIRMOTORB == 1 else Direction.COUNTERCLOCKWISE
 motordirection = (motordirectionA , motordirectionB)
 getmotors(motor)
 ###
