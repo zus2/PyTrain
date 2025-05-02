@@ -9,6 +9,7 @@
 DCMIN = 20          # min dc power (%) to move the train - crawl speed
 DIRMOTORA = -1      # Hub motor A Direction clockwise 1 or -1
 DIRMOTORB = 1       # Hub motor B Direction clockwise 1 or -1
+STOP_DELAY = 500    # short pause when braking to zero DC
 
 from pybricks.hubs import ThisHub
 from pybricks.pupdevices import DCMotor, Light, Remote, Motor
@@ -106,6 +107,10 @@ def drive(p, dc):
     
     if dc == 0:
         hub.light.on(Color.RED*0.5)
+        # hard coded delay for added UX
+        wait(STOP_DELAY)
+        # orange for ready to move
+        hub.light.on(Color.ORANGE*0.8)
     else:
         hub.light.on(Color.CYAN*0.7)
 
