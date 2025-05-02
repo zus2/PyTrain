@@ -23,10 +23,9 @@ DIRMOTORB = 1       # Hub motor B Direction clockwise 1 or -1
 STOP_DELAY = 500    # short pause when braking to zero DC
 
 from pybricks.hubs import ThisHub
-from pybricks.pupdevices import DCMotor, Light, Remote, Motor
-from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
-from pybricks.robotics import DriveBase
-from pybricks.tools import wait, StopWatch, run_task, multitask
+from pybricks.pupdevices import DCMotor, Remote, Motor
+from pybricks.parameters import Button, Color, Direction, Port
+from pybricks.tools import wait, StopWatch, run_task
 from pybricks.iodevices import PUPDevice
 
 def getmotors(motor):
