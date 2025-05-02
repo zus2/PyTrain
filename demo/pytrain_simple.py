@@ -6,7 +6,7 @@
 # --- User defined values
 # ----------
 
-DCMIN = 20          # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
+DCMIN = 20          # min dc power (%) to move the train - crawl speed
 DIRMOTORA = -1      # Hub motor A Direction clockwise 1 or -1
 DIRMOTORB = 1       # Hub motor B Direction clockwise 1 or -1
 
