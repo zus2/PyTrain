@@ -54,7 +54,7 @@ The Pybricks Train Controller is a Python-based script designed to enhance train
 4. The crawl speed is saved and will load automatically until reset.
 
 ## Pytrain Simple
-An experimental version completely recoded. The core controller routine is much more efficient and responsive than Pytrain and could be the basis for a co,plete rework. Install the same way as the main Pytrain program. There are no specific instructions - it is very much isntall and go.
+An experimental version completely recoded. The core controller handler is simpler and much more responsive than Pytrain and should be the basis for a complete rework. Install the same way as the main Pytrain program. There are no specific instructions - it is very much press to play.
 
 ## Contribution
 We welcome contributions! To contribute:
