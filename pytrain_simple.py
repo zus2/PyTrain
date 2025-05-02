@@ -1,5 +1,16 @@
-# pytrain_simple
+# pytrain_simple.py
 # v0.2
+# https://github.com/zus2/PyTrain
+#
+# a simple Pybricks train motor controller - with a great controller routine!
+# auto detects all hubs and up to 2 motors, DC or Technic
+#
+# Tested with v3.6.1 (Pybricks Code v2.6.0)
+#
+# © 2025 Paul Walsh
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. See LICENCE in the official repository.
 
 
 # ----------
