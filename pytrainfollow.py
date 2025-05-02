@@ -1,4 +1,6 @@
 # PytrainFollow - observer to Pytrain
+#
+# Version 0.92 Beta
 # https://github.com/zus2/PyTrain
 
 # ----------

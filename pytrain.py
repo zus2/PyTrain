@@ -1,6 +1,6 @@
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.9 Beta
+# Version 0.92 Beta
 # https://github.com/zus2/PyTrain
 #
 # © 2025 Paul Walsh
