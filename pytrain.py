@@ -3,6 +3,8 @@
 # Version 0.92 Beta
 # https://github.com/zus2/PyTrain
 #
+# Developed with v3.6.1 (Pybricks Code v2.6.0)
+#
 # © 2025 Paul Walsh
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
 # INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
@@ -410,22 +412,18 @@ async def heartbeat():
 """
 Set up multitasking with conditional broadcasting
 """
-if BROADCASTCHANNEL:
-    async def main():
-            await multitask(
-                controller(),
+
+tasks = [controller(),
                 ems(),
                 heartbeat(),
-                broadcast()
-            )
-else:
-    async def main():
-        await multitask(
-            controller(),
-            ems(),
-            heartbeat(),
-            #broadcast()
-        )
+        ]
+
+if BROADCASTCHANNEL:
+    tasks.append(broadcast())
+
+async def main():
+            await multitask(
+                *tasks)
 
 # --------------
 # --- initialise 
