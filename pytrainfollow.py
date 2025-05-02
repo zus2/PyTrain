@@ -2,16 +2,21 @@
 #
 # Version 0.92 Beta
 # https://github.com/zus2/PyTrain
+#
+# © 2025 Paul Walsh
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. See LICENCE in the official repository.
 
 # ----------
 # --- User defined values
 # ----------
 
-OBSERVECHANNEL = 1 #  Observer channel must match Broadcast channel in pytrain.py ( Use None or 0 - 255 )
-dirmotorA = -1       # A Direction clockwise 1 or -1
-dirmotorB = 1       # B Direction clockwise 1 or -1
-INACTIVITY = 5 # shut down the hub after this many minutes
-OUTPUT = False      # set to true to show extra info for debugging
+OBSERVECHANNEL = 1      # Must match Broadcast channel in pytrain.py
+dirmotorA = -1          # A Direction clockwise 1 or -1
+dirmotorB = 1           # B Direction clockwise 1 or -1
+INACTIVITY = 5          # shut down the hub after this many minutes
+OUTPUT = False          # set to true to show extra info for debugging
 
 # ----------
 # --- Main programme
