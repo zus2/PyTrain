@@ -1,7 +1,5 @@
-from pybricks.hubs import ThisHub
-from pybricks.pupdevices import DCMotor, Light, Remote
-from pybricks.parameters import Button, Color, Direction, Port, Side, Stop
-from pybricks.robotics import DriveBase
+from pybricks.pupdevices import Remote
+from pybricks.parameters import Button
 from pybricks.tools import wait, StopWatch, run_task, multitask
 
 def connect_remote():
