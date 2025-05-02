@@ -2,8 +2,8 @@
 # v0.21
 # https://github.com/zus2/PyTrain
 #
-# A simple Pybricks train motor controller - with a great controller routine
-# for great playability. Easy to customise simple logic.
+# A simple Pybricks train motor controller - with a great controller handler 
+# for extra precise playability. Easy to customise simple logic.
 # Auto detects all hubs and up to 2 motors, DC or Technic
 #
 # Tested with v3.6.1 (Pybricks Code v2.6.0)
