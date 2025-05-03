@@ -55,8 +55,8 @@ async def drive(target):
     await wait(0)
 
     # 2 deltas for accel and decel
-    smooth1 = 3 #  1 - 10 , try 4 - this defines the agressiveness of accel - higher is smoother
-    smooth2 = 2 #  1 - 10 , try 2 - this defines the agressiveness of decel - decrease for faster response
+    smooth1 = 3 #  2 - 10 , try 4 - this defines the agressiveness of accel - higher is smoother
+    smooth2 = 3 #  2 - 10 , try 3 - this defines the agressiveness of decel - decrease for faster response
 
     delta1 = max(1,round(abs(target - dc)/smooth1)) 
     delta2 = max(1,round(abs(target - dc)/smooth2)) 
