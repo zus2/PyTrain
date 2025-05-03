@@ -1,5 +1,5 @@
 # pytrain_simple.py
-# v0.21
+# v0.22
 # https://github.com/zus2/PyTrain
 #
 # A simple Pybricks train motor controller - with a great controller handler 
@@ -88,11 +88,11 @@ def drive(p, dc):
 
     if (Button.LEFT_PLUS) in pressed:
             if dc == 0: dc = DCMIN
-            if dc < 100: dc += 2
+            elif dc < 100: dc += 2
             if abs(dc) < DCMIN*0.7: dc = 0
     elif (Button.LEFT_MINUS) in pressed:
             if dc == 0: dc = -DCMIN
-            if dc > -100: dc -= 2
+            elif dc > -100: dc -= 2
             if abs(dc) < DCMIN*0.7: dc = 0
     elif (Button.LEFT) in pressed:
             hub.light.on(Color.RED*0.5)
@@ -115,8 +115,10 @@ def drive(p, dc):
         wait(STOP_DELAY)
         # orange for ready to move
         hub.light.on(Color.ORANGE*0.4)
-    else:
+    elif abs(dc) == DCMIN:
         hub.light.on(Color.CYAN*0.5)
+    else:
+        hub.light.on(Color.GREEN*0.4)
 
     print(dc)
     return dc
