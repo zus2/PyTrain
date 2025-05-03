@@ -19,6 +19,7 @@
 # ----------
 
 DCMIN = 20          # min dc power (%) to move the train - crawl speed
+DCMAX = 80          # max dc power (%) to keep train upright
 DIRMOTORA = -1      # Hub motor A Direction clockwise 1 or -1
 DIRMOTORB = 1       # Hub motor B Direction clockwise 1 or -1
 STOP_DELAY = 500    # short pause when braking to zero DC
@@ -88,14 +89,20 @@ def drive(p, dc):
 
     if (Button.LEFT_PLUS) in pressed:
             if dc == 0: dc = DCMIN
-            elif dc < 100: dc += 2
+            elif dc < DCMAX: dc += 2
             if abs(dc) < DCMIN*0.7: dc = 0
     elif (Button.LEFT_MINUS) in pressed:
             if dc == 0: dc = -DCMIN
-            elif dc > -100: dc -= 2
+            elif dc > -DCMAX: dc -= 2
             if abs(dc) < DCMIN*0.7: dc = 0
     elif (Button.LEFT) in pressed:
             hub.light.on(Color.RED*0.5)
+            """
+            # hard stop
+            for m in motor:
+                if (m): m.stop()
+            dc = 0
+            """
             # gentle stop
             while abs(dc) > 10:
                 dc = dc - 10 if dc > 0 else dc + 10
@@ -104,6 +111,7 @@ def drive(p, dc):
                 print(dc)
                 wait(140)
             dc = 0
+            
     
     # send drive command to motors 1 and 2
     for m in motor:
