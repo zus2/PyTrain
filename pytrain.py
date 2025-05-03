@@ -1,6 +1,6 @@
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.92 Beta
+# Version 0.93 Beta
 # https://github.com/zus2/PyTrain
 #
 # Developed with v3.6.1 (Pybricks Code v2.6.0)
@@ -14,17 +14,17 @@
 # --- User defined values
 # ----------
 
-dcsteps = 12        # number of +/- button presses to reach full forward speed: -s to +s (range 5 - 100)
-dcmin = 25          # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
-dcmax = 80          # max forward dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
-dcmaxr = 50         # max reverse dc power (%) ( range 0 - 90 (hard code limit)) - set to 0 for trams ?
-dcacc = 20          # acceleration - 1 (aggressive) - 80 (gentle) - try 20
+DCSTEPS = 12        # number of +/- button presses to reach full forward speed: -s to +s (range 5 - 100)
+DCMIN = 25          # min dc power (%) to move the train - can be changed in program ! ( range 10 - 40 )
+DCMAX = 80          # max forward dc power (%) to keep the train stay on the track ( range 41 - 90 (hard code limit) )
+DCMAXR = 50         # max reverse dc power (%) ( range 0 - 90 (hard code limit)) - set to 0 for trams ?
+DCACC = 20          # acceleration - 1 (aggressive) - 80 (gentle) - try 20
 BRAKE = 600         # ms delay after stopping to prevent overruns ( range 1 - 2000 ms )
 BROADCASTCHANNEL = None  # channel for 2nd hub ( 0 - 255 ) Use None if no other hub consumes power !
-INACTIVITY = 5      # mins before shutdown if no button pressed and train stationary
+INACTIVITY = 5      # mins before shutdown if no button pressed and train stationary, try 5
 dirmotorA = -1      # Hub motor A Direction clockwise 1 or -1
 dirmotorB = 1       # Hub motor B Direction clockwise 1 or -1
-OUTPUT = False      # set to true to show extra info for debugging
+OUTPUT = False      # set to true to show extra info for debugging - True or False
 
 # ----------
 # --- Main programme
@@ -50,7 +50,7 @@ async def drive(target):
     Args:
         target (int): The target duty cycle.
     """    
-    global dc , cc , dcmin , dcmaxr 
+    global dc , cc 
    
     await wait(0)
 
@@ -61,36 +61,39 @@ async def drive(target):
     delta1 = max(1,round(abs(target - dc)/smooth1)) 
     delta2 = max(1,round(abs(target - dc)/smooth2)) 
 
-    dckickstart = round(dcmin / 2) # kickstart in case delta very small 
-    dckickstop = round(dcmin / 2) # kickstop to prevent long tail slowdown blocking responsiveness
+    dckickstart = round(DCMIN / 2) # kickstart in case delta very small 
+    dckickstop = round(DCMIN / 2) # kickstop to prevent long tail slowdown blocking responsiveness
 
     # positive change
     if target > dc: 
         if dc >= 0: #forward accel
-            dc = max(dckickstart, dc + delta1) 
+            newdc = max(dckickstart, dc + delta1) 
         elif dc < -dckickstop: #reverse decel
-            dc = dc + delta2
+            newdc = dc + delta2
         else:
-            dc = 0
+            newdc = 0
     # negative change
     else:
         if dc <= 0: #accel reverse
-            dc = min(-dckickstart,dc - delta1) 
+            newdc = min(-dckickstart,dc - delta1) 
         elif dc > dckickstop: #forward decel
-            dc = dc - delta2
+            newdc = dc - delta2
         else:
-            dc = 0
+            newdc = 0
     
-    if (OUTPUT): print("dc target:",target,"actual dc",dc,"controller",cc)
+    if (OUTPUT): print("dc target:",target,"actual dc",newdc,"controller",cc)
     
     # hard code dc safety limit during development ( and maybe permanent )
-    dc = copysign(min(90,abs(dc)),dc)
+    newdc = copysign(min(90,abs(newdc)),newdc)
 
     # hard limit on reverse max dc - should be done via asymmetric dcprofiles
-    if dc < -dcmaxr: 
-        dc = -dcmaxr
+    if newdc < -DCMAXR: 
+        newdc = -DCMAXR
         cc += 1 # prevent racing to un unreachable target dc ( from cc )
-        if (OUTPUT): print("reverse speed limit reached:",dcmaxr)
+        if (OUTPUT): print("reverse speed limit reached:",DCMAXR)
+
+    #update global
+    dc = newdc
 
     # send drive command to motors 1 and 2
     for m in motor:
@@ -99,12 +102,14 @@ async def drive(target):
 
 async def broadcast():
     """
+    BT commands cannot be simultaneous:
     Activate and update 100ms system broadcast of dc and light values
-
+    Send light colour to remote 
     """
     await wait(0)
  
     thisdc = 0
+    thislight = Color.BLUE
 
     while True:
         await wait(0)
@@ -116,23 +121,30 @@ async def broadcast():
             try:
                 await hub.ble.broadcast(bdata)
                 thisdc = dc
-                # if (OUTPUT): print("broadcast data updated",bdata)
+                if (OUTPUT): print("broadcast data updated",bdata)
             except OSError as ex:
-                # frequent errors
                 if (OUTPUT): print ("broadcast error 1",ex)
+
+        if thislight != remotelight:
+
+            try:
+                await remote.light.on(remotelight)
+                thislight = remotelight
+            except OSError as ex:
+                if (OUTPUT): print ("remote light error 1",ex)
                 
-        await wait(50)
+        await wait(0)
 
 def dcprofile(mode):
     """
-    # Set up s discrete duty cycle steps from threshold (dcmin) to dcmax 
+    # Set up s discrete duty cycle steps from threshold (DCMIN) to DCMAX 
     # Map the loco power curve - for now threshold and then linear 
-    # This is also called if threshold dcmin is changed live
+    # This is also called if threshold DCMIN is changed live
 
     Args:
         mode (string):  Build normal dcramp or granular for calibration
     """
-    global dcramp, dcsteps , dcmin , dcmax
+    global dcramp
 
     dcramp={} #reset
 
@@ -142,11 +154,11 @@ def dcprofile(mode):
     
     else:
         dcramp[0] = 0
-        dcramp[1] = dcmin
-        for x in range(1,dcsteps+1):
-            dcramp[x+1] = round( dcmin + (dcmax-dcmin)*x/dcsteps, 1 )
+        dcramp[1] = DCMIN
+        for x in range(1,DCSTEPS+1):
+            dcramp[x+1] = round( DCMIN + (DCMAX-DCMIN)*x/DCSTEPS, 1 )
 
-    print("dcsteps",dcsteps,dcramp)    
+    print("DCSTEPS",DCSTEPS,dcramp)    
 
 def getmotors(motor):
     """
@@ -178,29 +190,21 @@ def getmotors(motor):
 
         #print(motor)
 
-
 async def stop():
     """
     Sets the stop LED and a wait period before traction can recommence to prevent overruns
     """
+    global remotelight
+
     await wait(0)
 
-    # avoid overruns
-    try:
-        await remote.light.on(LED_STOP)
-    except OSError:
-        pass # not critical
-    
+    remotelight = LED_STOP # remote light handled in broadcast()
     hub.light.on(LED_STOP)
 
     if(OUTPUT): print("brake .. (",BRAKE,"ms )")
     await wait(BRAKE)
 
-    try:
-        await remote.light.on(LED_READY)
-    except OSError:
-        pass # not critical
-    
+    remotelight = LED_READY # remote light handled in broadcast()
     hub.light.on(LED_READY)
 
     # stop button also used for crawl speed calibration
@@ -208,33 +212,29 @@ async def stop():
     while Button.LEFT in remote.buttons.pressed():
         count += 1
         if count == 5:
-            print("calibrate dcmin")
+            print("calibrate DCMIN")
             await calibrate()
         await wait(100)
 
 async def calibrate():
     """
-    Set the crawl speed dcmin in programme using left buttons (hold,set,save)
+    Set the crawl speed DCMIN in programme using left buttons (hold,set,save)
     """
-    global dcmin , cc
+    global DCMIN , cc, remotelight
 
     await wait(0)
 
-    dcmin = 0 # reset
+    DCMIN = 0 # reset
     vc = 0
 
     dcprofile("calibrate")
     
-    try:
-        await remote.light.on(LED_CALIBRATE)
-    except OSError:
-        pass # not critical
-    
+    remotelight = LED_CALIBRATE # remote light handled in broadcast()
     hub.light.on(LED_CALIBRATE)
 
-    print("Adjust dcmin (crawl speed) using Left +/- then save with Left Center")
+    print("Adjust DCMIN (crawl speed) using Left +/- then save with Left Center")
 
-    while True and dcmin == 0:
+    while True and DCMIN == 0:
         pressed = remote.buttons.pressed()
         if Button.LEFT_PLUS in pressed:
             vc += 1
@@ -242,23 +242,23 @@ async def calibrate():
             await drive(vc)
 
         if Button.LEFT_MINUS in pressed:
-            vc = vc - 1 if vc > 0 else 0 # we don't want negative dcmin
+            vc = vc - 1 if vc > 0 else 0 # we don't want negative DCMIN
             cc = vc
             await drive(vc)
 
         if Button.LEFT in pressed and vc > 0:
-            # set new dcmin
-            dcmin = cc
-            print("new dcmin is",dcmin)
+            # set new DCMIN
+            DCMIN = cc
+            print("new DCMIN is",DCMIN)
 
-            # store user dcmin:
-            hub.system.storage(offset=0, write=b"dc" + f"{dcmin:02}")
+            # store user DCMIN:
+            hub.system.storage(offset=0, write=b"dc" + f"{DCMIN:02}")
             print("and saved to hub")
 
             dcprofile("run")
             cc = 1
             await go(cc)
-            await drive(dcmin) # not strictly necessary but displays values
+            await drive(DCMIN) # not strictly necessary but displays values
 
         await wait(100)
 
@@ -269,7 +269,7 @@ async def go(cc):
     Args:
         cc(int): Controller click count
     """
-    await wait(0)
+    global remotelight
 
     lowcc = abs(cc)
     if lowcc == 1:
@@ -283,12 +283,7 @@ async def go(cc):
     else:
         led = LED_GO4
     
-    # getting occasional errors updating the remote led
-    try:
-        await remote.light.on(led)
-    except OSError as ex:
-        print("** failed to set the LED in go() **",ex)
-    
+    remotelight = led # remote light handled in broadcast()
     hub.light.on(led)
 
     if led == LED_CRAWL:
@@ -316,15 +311,15 @@ async def ems():
             #print ("drive",target)
             await drive(target)
         
-        # dcacc controls accel / decel response
+        # DCACC controls accel / decel response
         # try 20 (200ms) for s=12 , less if s higher 
-        await wait(dcacc * 10)
+        await wait(DCACC * 10)
 
 async def controller():
     """
     Handles button presses and sets remote and hub status lights
     """
-    global cc , beat , dc
+    global cc , beat, dc
 
     await wait(0)    
     
@@ -341,13 +336,13 @@ async def controller():
             beat = 1 # reset heartbeat()
     
             if Button.LEFT_PLUS in pressed:
-                cc = cc + 1 if cc < dcsteps+1 else dcsteps+1
+                cc = cc + 1 if cc < DCSTEPS+1 else DCSTEPS+1
                 if (OUTPUT):print("remote",cc)
                 if cc == 0: await stop()
                 else: await go(cc)
                 
             elif Button.LEFT_MINUS in pressed:
-                cc = cc - 1 if cc > -(dcsteps+1) else -(dcsteps+1)
+                cc = cc - 1 if cc > -(DCSTEPS+1) else -(DCSTEPS+1)
                 if (OUTPUT):print("remote",cc)
                 if cc == 0: await stop()
                 else: await go(cc)
@@ -387,7 +382,7 @@ async def heartbeat():
     """
     Shut down after a INACTIVITY minutes of inactivity
     """
-    global beat
+    global beat, dc
 
     await wait(0)
     
@@ -434,26 +429,26 @@ async def main():
 # error messages tuple
 sm = ("*** sanity check ***","value","invalid - has been reset to","- check your values")
 
-if not dcsteps in range(5,101):
-    _bad = dcsteps 
-    dcsteps = 10
-    print (sm[0],"s",sm[1],_bad,sm[2],dcsteps,sm[3])
-if not dcmin in range(10,41): 
-    _bad = dcmin
-    dcmin = 25
-    print (sm[0],"dcmin",sm[1],_bad,sm[2],dcmin,sm[3])
-if not dcmax in range(41,91): 
-    _bad = dcmax
-    dcmax = 80
-    print (sm[0],"dcmax",sm[1],_bad,sm[2],dcmax,sm[3])
-if not dcmaxr in range(0,91): 
-    _bad = dcmaxr
-    dcmaxr = 70
-    print (sm[0],"dcmaxr",sm[1],_bad,sm[2],dcmaxr,sm[3])
-if not dcacc in range(1,81): 
-    _bad = dcacc
-    dcacc = 20
-    print (sm[0],"dcacc",sm[1],_bad,sm[2],dcacc,sm[3])
+if not DCSTEPS in range(5,101):
+    _bad = DCSTEPS 
+    DCSTEPS = 10
+    print (sm[0],"s",sm[1],_bad,sm[2],DCSTEPS,sm[3])
+if not DCMIN in range(10,41): 
+    _bad = DCMIN
+    DCMIN = 25
+    print (sm[0],"DCMIN",sm[1],_bad,sm[2],DCMIN,sm[3])
+if not DCMAX in range(41,91): 
+    _bad = DCMAX
+    DCMAX = 80
+    print (sm[0],"DCMAX",sm[1],_bad,sm[2],DCMAX,sm[3])
+if not DCMAXR in range(0,91): 
+    _bad = DCMAXR
+    DCMAXR = 70
+    print (sm[0],"DCMAXR",sm[1],_bad,sm[2],DCMAXR,sm[3])
+if not DCACC in range(1,81): 
+    _bad = DCACC
+    DCACC = 20
+    print (sm[0],"DCACC",sm[1],_bad,sm[2],DCACC,sm[3])
 if not BRAKE in range(1,2001): 
     _bad = BRAKE
     BRAKE = 600
@@ -483,7 +478,7 @@ LED_GO1 = Color.GREEN*0.2
 LED_GO2 = Color.GREEN*0.3  
 LED_GO3 = Color.GREEN*0.4  
 LED_GO4 = Color.GREEN*0.5  
-LED_CRAWL = Color.CYAN*0.3  # crawl ( dcmin )
+LED_CRAWL = Color.CYAN*0.3  # crawl ( DCMIN )
 LED_STOP = Color.RED*0.5  # brake 
 LED_READY = Color.ORANGE*1.0  # loco ready and idling
 LED_CALIBRATE = Color.VIOLET # calibrate crawl speed in programme
@@ -501,29 +496,27 @@ print("---\nCell voltage:",round(hub.battery.voltage()/6000,2))
 print ("Looking for remote ..")
 try:
     remote = Remote(timeout=20000)
-    remote.light.on(LED_READY)
+    remotelight = LED_READY # remote light handled in broadcast()
 except OSError as ex:
     print ("Not found - shutting down ..")
     wait(1000)
     hub.system.shutdown()
 
-# check for storage dcmin
+# check for storage DCMIN
 # read user data:
 data = hub.system.storage(offset=0, read=4)
 data = str(data,"utf-8") 
 
 if data[:2] == "dc" and int(data[2:4]) in range (0,30): 
-    dcmin = int(data[2:4])
-    print("Using stored dcmin",dcmin," - recalibrate to override",) 
+    DCMIN = int(data[2:4])
+    print("Using stored DCMIN",DCMIN," - recalibrate to override",) 
 else:
-    print("Stored dcmin not found:",data," ( only stored with calibration )")
-    print("Using dcmin=",dcmin)
+    print("Stored DCMIN not found:",data," ( only stored with calibration )")
+    print("Using DCMIN=",DCMIN)
 
 # some of these set up functions have to be run before main()
 dcprofile("run")
 getmotors(motor)
-
-remote.light.on(LED_READY)
 hub.light.on(LED_READY)
 
 run_task(main())
