@@ -105,6 +105,10 @@ def drive(p, dc):
                 wait(140)
             dc = 0
     
+    # send drive command to motors 1 and 2
+    for m in motor:
+        if (m): m.dc(dc)
+
     if dc == 0:
         hub.light.on(Color.RED*0.5)
         # hard coded delay for added UX
@@ -113,10 +117,6 @@ def drive(p, dc):
         hub.light.on(Color.ORANGE*0.4)
     else:
         hub.light.on(Color.CYAN*0.5)
-
-    # send drive command to motors 1 and 2
-    for m in motor:
-        if (m): m.dc(dc)
 
     print(dc)
     return dc
