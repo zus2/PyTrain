@@ -1,6 +1,6 @@
 # PyTrain - A Pybricks train controller with asynchronous MicroPython coroutines 
 #
-# Version 0.93 Beta
+# Version 0.94 Beta
 # https://github.com/zus2/PyTrain
 #
 # Developed with v3.6.1 (Pybricks Code v2.6.0)
@@ -114,16 +114,17 @@ async def broadcast():
     while True:
         await wait(0)
 
-        if thisdc != dc:
+        if not BROADCASTCHANNEL is None:   # 0 is a valid channel
+            if thisdc != dc:
 
-            bdata = (dc, 0)
+                bdata = (dc, 0)
 
-            try:
-                await hub.ble.broadcast(bdata)
-                thisdc = dc
-                if (OUTPUT): print("broadcast data updated",bdata)
-            except OSError as ex:
-                if (OUTPUT): print ("broadcast error 1",ex)
+                try:
+                    await hub.ble.broadcast(bdata)
+                    thisdc = dc
+                    if (OUTPUT): print("broadcast data updated",bdata)
+                except OSError as ex:
+                    if (OUTPUT): print ("broadcast error 1",ex)
 
         if thislight != remotelight:
 
@@ -365,7 +366,7 @@ async def controller():
                     if (count == 10): # 1 seconds ( plus brake in stop() )
                         print("Shutting down hub ...")
                         await remote.light.on(LED_STOP)
-                        if BROADCASTCHANNEL: 
+                        if not BROADCASTCHANNEL is None: 
                             dc = "x" #shut down the second hub
                             await wait(1000)
                         hub.system.shutdown() 
@@ -394,7 +395,7 @@ async def heartbeat():
         # shutdown after 5 minutes if not running and no remote buttons pressed
         elif beat >= INACTIVITY: 
             print ("no activity for",INACTIVITY,"minutes - shutting down ..")
-            if BROADCASTCHANNEL: dc = "x" #shut down the second hub
+            if not BROADCASTCHANNEL is None: dc = "x" #shut down the second hub
             wait(100)
             hub.system.shutdown()
             
@@ -411,10 +412,8 @@ Set up multitasking with conditional broadcasting
 tasks = [controller(),
                 ems(),
                 heartbeat(),
+                broadcast()
         ]
-
-if BROADCASTCHANNEL:
-    tasks.append(broadcast())
 
 async def main():
             await multitask(
