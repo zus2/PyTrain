@@ -504,6 +504,7 @@ try:
     remote.light.on(LED_READY)
 except OSError as ex:
     print ("Not found - shutting down ..")
+    wait(1000)
     hub.system.shutdown()
 
 # check for storage dcmin

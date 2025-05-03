@@ -96,6 +96,7 @@ def drive(p, dc):
             if abs(dc) < DCMIN*0.7: dc = 0
     elif (Button.LEFT) in pressed:
             hub.light.on(Color.RED*0.5)
+            # gentle stop
             while abs(dc) > 10:
                 dc = dc - 10 if dc > 0 else dc + 10
                 for m in motor:
@@ -146,5 +147,5 @@ motordirection = (motordirectionA , motordirectionB)
 getmotors(motor)
 ###
 
-# my version 
+# my new controller 
 run_task(controller())
