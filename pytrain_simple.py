@@ -26,7 +26,7 @@ Red light = stop , amber = ready , green = go and cyan = crawl
 You can change the crawl speed below (DCMIN) and max (DCMAX)
 Center red button once: stop the program and train instantly
 Center red button hold 1 second: shut down the hub and controller
-Run the program from your computer, or the hub (switch remote on promptly)
+Run the program from your computer, or the hub - 2 clicks ! (switch the remote on promptly)
 NB: DC stands for "duty charge" - train parlance for the power setting (%)
 """
 
