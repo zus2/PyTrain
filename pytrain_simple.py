@@ -1,18 +1,30 @@
 # pytrain_simple.py
-# v0.22
+# v0.3
 # https://github.com/zus2/PyTrain
 #
 # A simple Pybricks train motor controller - with a great controller handler 
 # for extra precise playability. Easy to customise simple logic.
 # Auto detects all hubs and up to 2 motors, DC or Technic
 #
-# Tested with v3.6.1 (Pybricks Code v2.6.0)
+# Tested with Pybricks v3.6.1 (Pybricks Code v2.6.0)
 #
 # © 2025 Paul Walsh
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
 # INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
 # PARTICULAR PURPOSE AND NONINFRINGEMENT. See LICENCE in the official repository.
+#
 
+"""
+Instructions:
+Change the motor directions below to suit your train
+Motor detection automatic ( 1 or 2 in port A and/or B)
+Use left +/- and left center to control the train
+Red light = stop , amber = ready , green = go and cyan = crawl 
+You can change the crawl speed below (DCMIN) and max (DCMAX)
+Center red button once: stop the program and train instantly
+Center red button hold 1 second: shut down the hub and controller
+Run the program from your computer, or the hub (switch remote on promptly)
+"""
 
 # ----------
 # --- User defined values
@@ -23,6 +35,11 @@ DCMAX = 80          # max dc power (%) to keep train upright
 DIRMOTORA = -1      # Hub motor A Direction clockwise 1 or -1
 DIRMOTORB = 1       # Hub motor B Direction clockwise 1 or -1
 STOP_DELAY = 500    # short pause when braking to zero DC
+
+# ----------
+# --- Main programme
+# ----Do not change anything below here unless you are a competent programmer
+# ----------
 
 from pybricks.hubs import ThisHub
 from pybricks.pupdevices import DCMotor, Remote, Motor
@@ -65,6 +82,9 @@ def controller():
     dc = 0
 
     while True:
+        
+        #print(hub.battery.current())
+        
         pressed = ()
 
         # Wait until a button is pressed.
@@ -87,15 +107,15 @@ def controller():
 def drive(p, dc):
     pressed = p
 
-    if (Button.LEFT_PLUS) in pressed:
+    if Button.LEFT_PLUS in pressed:
             if dc == 0: dc = DCMIN
             elif dc < DCMAX: dc += 2
             if abs(dc) < DCMIN*0.7: dc = 0
-    elif (Button.LEFT_MINUS) in pressed:
+    elif Button.LEFT_MINUS in pressed:
             if dc == 0: dc = -DCMIN
             elif dc > -DCMAX: dc -= 2
             if abs(dc) < DCMIN*0.7: dc = 0
-    elif (Button.LEFT) in pressed:
+    elif Button.LEFT in pressed:
             hub.light.on(Color.RED*0.5)
             """
             # hard stop
@@ -109,9 +129,25 @@ def drive(p, dc):
                 for m in motor:
                     if (m): m.dc(dc)
                 print(dc)
-                wait(140)
+                wait(150)
             dc = 0
-            
+        
+    elif Button.CENTER in pressed:
+                # press once to stop the train AND the programme
+                # hold 2 secs to shutdown hub
+                print("remote center")
+                for m in motor:
+                    if (m): m.dc(0)
+                count = 0
+                while Button.CENTER in pressed:
+                    pressed = remote.buttons.pressed()
+                    count+=1
+                    if (count == 10): # 1 seconds ( plus brake in stop() )
+                        print("Shutting down hub ...")
+                        wait(100)
+                        hub.system.shutdown() 
+                    wait(100)
+                raise SystemExit("Closing program..")
     
     # send drive command to motors 1 and 2
     for m in motor:
