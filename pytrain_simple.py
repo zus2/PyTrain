@@ -76,14 +76,12 @@ def getmotors(motor):
             motor.append("")
 
 def controller():
-    INITIAL_DELAY = 350
-    REPEAT_DELAY = 100
+    INITIAL_DELAY = 350 # ms pause before repeat presses begin try 350
+    REPEAT_DELAY = 100  # ms pause between repeat presses try 100
     watch = StopWatch()
     dc = 0
 
     while True:
-        
-        #print(hub.battery.current())
         
         pressed = ()
 
