@@ -17,9 +17,9 @@
 """
 Instructions for use:
 Use any hub
-Install Pybricks frmo https://code.pybricks.com
+Install Pybricks from https://code.pybricks.com
 Download, install and run pytrain_simple.py
-Motor detection is automatic ( 1 or 2 motors, DC or Technic in port A and/or B)
+Motor detection is automatic ( 1 or 2 motors, DC or Technic in port A and/or B )
 Change the motor directions below to suit your train
 Use left +/- and left center to control the train
 Red light = stop , amber = ready , green = go and cyan = crawl 
