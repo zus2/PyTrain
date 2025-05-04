@@ -24,7 +24,8 @@ The Pybricks Train Controller is a Python-based script designed to enhance train
 * Memorizes crawl speed setting after shutdown.
 * Compatible with Technic and City hubs.
 * Separate reverse speed limit, which can be set to 0 (e.g., for trams).
-* Supports a second hub with the slave hub program.
+* Supports a second hub installed with pytrainfollow.py.
+* Simple version similar to PU app or to customise - pytrain_simple.py
 * Upcoming Feature: Headlights control.
  
 ## Installation

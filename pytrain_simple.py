@@ -1,5 +1,5 @@
 # pytrain_simple.py
-# v0.3
+# v0.4
 # https://github.com/zus2/PyTrain
 #
 # A simple Pybricks train motor controller - with a great controller handler 
@@ -15,15 +15,19 @@
 #
 
 """
-Instructions:
+Instructions for use:
+Use any hub
+Install Pybricks frmo https://code.pybricks.com
+Download, install and run pytrain_simple.py
+Motor detection is automatic ( 1 or 2 motors, DC or Technic in port A and/or B)
 Change the motor directions below to suit your train
-Motor detection automatic ( 1 or 2 in port A and/or B)
 Use left +/- and left center to control the train
 Red light = stop , amber = ready , green = go and cyan = crawl 
 You can change the crawl speed below (DCMIN) and max (DCMAX)
 Center red button once: stop the program and train instantly
 Center red button hold 1 second: shut down the hub and controller
 Run the program from your computer, or the hub (switch remote on promptly)
+NB: DC stands for "duty charge" - train parlance for the power setting (%)
 """
 
 # ----------
@@ -34,11 +38,11 @@ DCMIN = 20          # min dc power (%) to move the train - crawl speed
 DCMAX = 80          # max dc power (%) to keep train upright
 DIRMOTORA = -1      # Hub motor A Direction clockwise 1 or -1
 DIRMOTORB = 1       # Hub motor B Direction clockwise 1 or -1
-STOP_DELAY = 500    # short pause when braking to zero DC
+STOP_DELAY = 400    # short pause when braked to zero DC
 
 # ----------
 # --- Main programme
-# ----Do not change anything below here unless you are a competent programmer
+# --- Do not change anything below here unless you are a programmer
 # ----------
 
 from pybricks.hubs import ThisHub
@@ -76,12 +80,14 @@ def getmotors(motor):
             motor.append("")
 
 def controller():
-    INITIAL_DELAY = 350 # ms pause before repeat presses begin try 350
-    REPEAT_DELAY = 100  # ms pause between repeat presses try 100
+    INITIAL_DELAY = 350
+    REPEAT_DELAY = 100
     watch = StopWatch()
     dc = 0
 
     while True:
+        
+        #print(hub.battery.current())
         
         pressed = ()
 
@@ -114,7 +120,8 @@ def drive(p, dc):
             elif dc > -DCMAX: dc -= 2
             if abs(dc) < DCMIN*0.7: dc = 0
     elif Button.LEFT in pressed:
-            hub.light.on(Color.RED*0.5)
+            hub.light.on(LED_STOP)
+            remote.light.on(LED_STOP)
             """
             # hard stop
             for m in motor:
@@ -152,21 +159,31 @@ def drive(p, dc):
         if (m): m.dc(dc)
 
     if dc == 0:
-        hub.light.on(Color.RED*0.5)
+        hub.light.on(LED_STOP)
+        remote.light.on(LED_STOP)
         # hard coded delay for added UX
         wait(STOP_DELAY)
         # orange for ready to move
-        hub.light.on(Color.ORANGE*0.4)
+        hub.light.on(LED_READY)
+        remote.light.on(LED_READY)
     elif abs(dc) == DCMIN:
-        hub.light.on(Color.CYAN*0.5)
+        hub.light.on(LED_CRAWL)
+        remote.light.on(LED_CRAWL)
     else:
-        hub.light.on(Color.GREEN*0.4)
-
+        hub.light.on(LED_GO)
+        remote.light.on(LED_GO)
+    
     print(dc)
     return dc
 
-# --- set up hub and remote
+# --- set up hub 
 hub = ThisHub(broadcast_channel=None)
+
+# You may not need to change these
+LED_STOP = Color.RED*0.5
+LED_GO = Color.GREEN*0.4
+LED_CRAWL = Color.CYAN*0.5
+LED_READY = Color.ORANGE*0.4
 
 # --- clear terminal 
 print("\x1b[H\x1b[2J", end="")
