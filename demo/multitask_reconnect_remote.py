@@ -11,13 +11,13 @@
 # ---
 
 
-from pybricks.hubs import TechnicHub
+from pybricks.hubs import ThisHub
 from pybricks.pupdevices import Remote, Motor
 from pybricks.tools import wait, run_task, multitask
 from pybricks.parameters import Port, Button
 
-hub = TechnicHub()
-motor = Motor(Port.A)
+hub = ThisHub()
+#motor = Motor(Port.A)
 
 remoteconnected = False
 instancecount = 0
